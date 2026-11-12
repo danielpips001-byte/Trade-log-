@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "Trade": {
+      "title": "Trade",
+      "description": "A single trading execution record with parameters and screenshot references",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "accountId": { "type": "string" },
+        "asset": { "type": "string" },
+        "direction": { "type": "string", "enum": ["BUY", "SELL"] },
+        "entryPrice": { "type": "number" },
+        "exitPrice": { "type": "number" },
+        "stopLoss": { "type": "number" },
+        "takeProfit": { "type": "number" },
+        "lotSize": { "type": "number" },
+        "realizedPnl": { "type": "number" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "status": { "type": "string", "enum": ["Win", "Loss", "Breakeven", "Open"] },
+        "strategy": { "type": "string" },
+        "notes": { "type": "string" },
+        "beforeScreenshot": { "type": "string" },
+        "afterScreenshot": { "type": "string" },
+        "screenshots": { "type": "array" }
+      },
+      "required": ["id", "accountId", "asset", "direction", "realizedPnl", "date", "status"]
+    },
+    "Account": {
+      "title": "Account",
+      "description": "Trading account portfolio (Prop Firm, Live, or Demo)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["Prop Firm", "Live", "Demo"] },
+        "broker": { "type": "string" },
+        "startingBalance": { "type": "number" },
+        "currentBalance": { "type": "number" },
+        "currency": { "type": "string", "enum": ["USD", "EUR", "GBP", "AUD", "JPY"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "type", "startingBalance", "currentBalance", "currency"]
+    }
+  },
+  "firestore": {
+    "/trades/{tradeId}": {
+      "schema": "Trade",
+      "description": "Collection of recorded trades"
+    },
+    "/accounts/{accountId}": {
+      "schema": "Account",
+      "description": "Collection of trading accounts"
+    }
+  }
+}

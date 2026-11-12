@@ -1,0 +1,6 @@
+{
+  "name": "TradeLog - Midnight Terminal Trading Journal",
+  "description": "Premium mobile-first personal trading journal and analytics dashboard for forex, crypto, and futures traders.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
