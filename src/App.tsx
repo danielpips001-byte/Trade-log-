@@ -6,6 +6,7 @@ import { MyJournalView } from './components/journal/MyJournalView';
 import { PerformanceView } from './components/performance/PerformanceView';
 import { ToolsView } from './components/tools/ToolsView';
 import { AccountsModal } from './components/accounts/AccountsModal';
+import { OnboardingAccountView } from './components/accounts/OnboardingAccountView';
 import { AddTradeModal } from './components/trades/AddTradeModal';
 import { TradeDetailModal } from './components/trades/TradeDetailModal';
 import { InstrumentSpecModal } from './components/specs/InstrumentSpecModal';
@@ -13,7 +14,7 @@ import { CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const AppContent: React.FC = () => {
-  const { activeTab } = useTrading();
+  const { activeTab, accounts } = useTrading();
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -23,9 +24,6 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#3D3D3D] text-white flex flex-col font-sans selection:bg-[#2196F3] selection:text-white overflow-x-hidden">
-      {/* Top Bar */}
-      <Header />
-
       {/* Global Confirmation Toast */}
       <AnimatePresence>
         {toastMsg && (
@@ -41,31 +39,40 @@ const AppContent: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
-      <main className="flex-1">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-          >
-            {activeTab === 'tools' && <ToolsView />}
-            {activeTab === 'journal' && <MyJournalView />}
-            {activeTab === 'performance' && <PerformanceView />}
-          </motion.div>
-        </AnimatePresence>
-      </main>
+      {accounts.length === 0 ? (
+        <OnboardingAccountView onAccountCreated={showToast} />
+      ) : (
+        <>
+          {/* Top Bar */}
+          <Header />
 
-      {/* Fixed 3-Tab Bottom Navigation */}
-      <BottomNav />
+          {/* Main Content */}
+          <main className="flex-1">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+              >
+                {activeTab === 'tools' && <ToolsView />}
+                {activeTab === 'journal' && <MyJournalView />}
+                {activeTab === 'performance' && <PerformanceView />}
+              </motion.div>
+            </AnimatePresence>
+          </main>
 
-      {/* Global Modals */}
-      <AccountsModal />
-      <AddTradeModal onSavedSuccess={showToast} />
-      <TradeDetailModal />
-      <InstrumentSpecModal />
+          {/* Fixed 3-Tab Bottom Navigation */}
+          <BottomNav />
+
+          {/* Global Modals */}
+          <AccountsModal />
+          <AddTradeModal onSavedSuccess={showToast} />
+          <TradeDetailModal />
+          <InstrumentSpecModal />
+        </>
+      )}
     </div>
   );
 };

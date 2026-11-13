@@ -44,19 +44,19 @@
     }
   },
   "firestore": {
-    "/trades/{tradeId}": {
+    "/workspaces/{workspaceId}/trades/{tradeId}": {
       "schema": "Trade",
-      "description": "Collection of recorded trades"
+      "description": "Collection of recorded trades isolated per workspace"
     },
-    "/accounts/{accountId}": {
+    "/workspaces/{workspaceId}/accounts/{accountId}": {
       "schema": "Account",
-      "description": "Collection of trading accounts"
+      "description": "Collection of trading accounts isolated per workspace"
     },
-    "/instrumentSpecs/{symbolId}": {
+    "/workspaces/{workspaceId}/instrumentSpecs/{symbolId}": {
       "schema": "InstrumentSpec",
       "description": "Broker instrument contract and tick specifications"
     },
-    "/exchangeRates/{rateDocId}": {
+    "/workspaces/{workspaceId}/exchangeRates/{rateDocId}": {
       "schema": "ExchangeRateMap",
       "description": "User-configured currency exchange rates"
     }

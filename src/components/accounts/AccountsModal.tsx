@@ -15,7 +15,9 @@ import {
   Loader2,
   AlertCircle,
   Wallet,
-  Layers
+  Layers,
+  KeyRound,
+  Copy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -23,6 +25,8 @@ const ALL_CURRENCIES: AccountCurrency[] = ['USD', 'NGN', 'EUR', 'GBP', 'AUD', 'J
 
 export const AccountsModal: React.FC = () => {
   const {
+    workspaceId,
+    switchWorkspace,
     accounts,
     selectedAccountId,
     setSelectedAccountId,
@@ -52,6 +56,12 @@ export const AccountsModal: React.FC = () => {
   const [reportingCurrency, setReportingCurrency] = useState<'USD' | 'NGN'>('USD');
   const [quickRateInput, setQuickRateInput] = useState('');
   const [savingRate, setSavingRate] = useState(false);
+
+  // Workspace Sync Key state
+  const [copiedKey, setCopiedKey] = useState(false);
+  const [showSwitchKey, setShowSwitchKey] = useState(false);
+  const [switchKeyInput, setSwitchKeyInput] = useState('');
+  const [isSwitchingKey, setIsSwitchingKey] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -171,6 +181,35 @@ export const AccountsModal: React.FC = () => {
       setErrorMsg(err?.message || 'Failed to save exchange rate.');
     } finally {
       setSavingRate(false);
+    }
+  };
+
+  const handleCopySyncKey = async () => {
+    try {
+      await navigator.clipboard.writeText(workspaceId);
+      setCopiedKey(true);
+      setTimeout(() => setCopiedKey(false), 2000);
+    } catch {
+      setErrorMsg(`Your Sync Key is ${workspaceId}`);
+    }
+  };
+
+  const handleSwitchWorkspace = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    if (!switchKeyInput.trim()) {
+      setErrorMsg('Enter a Sync Key to restore another journal.');
+      return;
+    }
+    setIsSwitchingKey(true);
+    try {
+      await switchWorkspace(switchKeyInput);
+      setSwitchKeyInput('');
+      setShowSwitchKey(false);
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Failed to switch journal workspace.');
+    } finally {
+      setIsSwitchingKey(false);
     }
   };
 
@@ -673,6 +712,73 @@ export const AccountsModal: React.FC = () => {
                       </div>
                     );
                   })}
+
+                  {/* Workspace Sync Key Footer */}
+                  <div className="rounded-xl p-3.5 bg-[#1B1B1B] border border-white/[0.06] space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <KeyRound className="w-4 h-4 text-[#2196F3] shrink-0" />
+                        <div className="min-w-0">
+                          <span className="text-[11px] font-semibold text-neutral-300 block">
+                            Journal Sync Key
+                          </span>
+                          <span className="text-xs font-mono font-bold text-white tracking-wide">
+                            {workspaceId}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={handleCopySyncKey}
+                          className="px-2.5 py-1.5 rounded-lg bg-[#2C2C2C] hover:bg-[#383838] text-xs font-semibold text-neutral-200 flex items-center gap-1 cursor-pointer"
+                        >
+                          {copiedKey ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-[#2ECC71]" />
+                              <span className="text-[#2ECC71]">Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowSwitchKey(!showSwitchKey);
+                            setErrorMsg(null);
+                          }}
+                          className="px-2.5 py-1.5 rounded-lg bg-[#2C2C2C] hover:bg-[#383838] text-xs font-semibold text-neutral-200 cursor-pointer"
+                        >
+                          {showSwitchKey ? 'Hide' : 'Switch'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {showSwitchKey && (
+                      <form onSubmit={handleSwitchWorkspace} className="pt-2 border-t border-white/[0.06] flex gap-2">
+                        <input
+                          type="text"
+                          value={switchKeyInput}
+                          onChange={(e) => setSwitchKeyInput(e.target.value.toUpperCase())}
+                          placeholder="Enter another Sync Key (e.g. TL-...)"
+                          className="flex-1 bg-[#141414] border border-white/15 rounded-lg px-2.5 py-1.5 text-xs font-mono uppercase text-white placeholder-neutral-500 focus:outline-none focus:border-[#2196F3]"
+                        />
+                        <button
+                          type="submit"
+                          disabled={isSwitchingKey}
+                          className="px-3 py-1.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] disabled:opacity-60 text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+                        >
+                          {isSwitchingKey && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                          <span>Restore</span>
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

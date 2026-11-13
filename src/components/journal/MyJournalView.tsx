@@ -399,13 +399,24 @@ export const MyJournalView: React.FC = () => {
             })
           ) : (
             <div className="bg-[#262626] rounded-xl p-8 text-center border border-white/[0.06] space-y-3">
-              <p className="text-sm font-semibold text-neutral-300">
-                No trades recorded for this filter yet.
-              </p>
+              {filteredTrades.length === 0 ? (
+                <>
+                  <p className="text-base font-bold text-white">
+                    Ready to start journaling
+                  </p>
+                  <p className="text-xs text-neutral-400 max-w-xs mx-auto leading-relaxed">
+                    Record your first position to track live risk, reward, and account performance.
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm font-semibold text-neutral-300">
+                  No trades match this search or filter.
+                </p>
+              )}
               <button
                 type="button"
                 onClick={() => setIsAddTradeModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold cursor-pointer min-h-[42px]"
               >
                 <Plus className="w-4 h-4" />
                 <span>Log First Trade</span>

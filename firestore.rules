@@ -1,6 +1,26 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    match /workspaces/{workspaceId} {
+      match /trades/{tradeId} {
+        allow read, write: if true;
+      }
+      match /accounts/{accountId} {
+        allow read, write: if true;
+      }
+      match /rules/{ruleId} {
+        allow read, write: if true;
+      }
+      match /journal/{entryId} {
+        allow read, write: if true;
+      }
+      match /instrumentSpecs/{symbolId} {
+        allow read, write: if true;
+      }
+      match /exchangeRates/{rateDocId} {
+        allow read, write: if true;
+      }
+    }
     match /trades/{tradeId} {
       allow read, write: if true;
     }

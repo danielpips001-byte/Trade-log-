@@ -1,41 +1,75 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { Account, Trade, JournalEntry, TradingRule, ActiveTab, CloseOutcome, InstrumentSpec, ExchangeRateMap } from '../types/trading';
-import { INITIAL_ACCOUNTS, INITIAL_TRADES, INITIAL_JOURNAL, INITIAL_RULES } from '../data/mockData';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  Account,
+  Trade,
+  JournalEntry,
+  TradingRule,
+  ActiveTab,
+  CloseOutcome,
+  InstrumentSpec,
+  ExchangeRateMap
+} from '../types/trading';
 import { STARTER_INSTRUMENT_SPECS } from '../utils/calculations';
 import { db, sanitizeForFirestore } from '../lib/firebase';
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  updateDoc, 
-  deleteDoc, 
-  onSnapshot 
+import {
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  getDocs,
+  onSnapshot
 } from 'firebase/firestore';
 
 interface TradingContextType {
+  workspaceId: string;
+  switchWorkspace: (syncKey: string) => Promise<void>;
+
   accounts: Account[];
   selectedAccountId: string;
   setSelectedAccountId: (id: string) => void;
   activeAccount: Account | undefined;
-  addAccount: (account: { name: string; type: Account['type']; broker?: string; startingBalance: number; currency: Account['currency'] }) => Promise<Account>;
-  updateAccount: (accountId: string, updates: { name?: string; type?: Account['type']; broker?: string; currency?: Account['currency']; currentBalance?: number }) => Promise<void>;
+  addAccount: (account: {
+    name: string;
+    type: Account['type'];
+    broker?: string;
+    startingBalance: number;
+    currency: Account['currency'];
+  }) => Promise<Account>;
+  updateAccount: (
+    accountId: string,
+    updates: {
+      name?: string;
+      type?: Account['type'];
+      broker?: string;
+      currency?: Account['currency'];
+      currentBalance?: number;
+    }
+  ) => Promise<void>;
   updateAccountBalance: (accountId: string, newBalance: number) => Promise<void>;
   deleteAccount: (accountId: string) => Promise<void>;
 
   trades: Trade[];
   filteredTrades: Trade[];
-  addTrade: (trade: Omit<Trade, 'id' | 'status' | 'realizedPnl'> & { realizedPnl?: number; status?: 'Open' | 'Closed' }) => Promise<Trade>;
-  closeTrade: (tradeId: string, closeData: {
-    outcome: CloseOutcome;
-    exitPrice: number;
-    realizedPnl: number;
-    grossRealizedPnl?: number;
-    commission?: number;
-    swap?: number;
-    closedDate: string;
-    closedAt: string;
-    notes?: string;
-  }) => Promise<void>;
+  addTrade: (
+    trade: Omit<Trade, 'id' | 'status' | 'realizedPnl'> & {
+      realizedPnl?: number;
+      status?: 'Open' | 'Closed';
+    }
+  ) => Promise<Trade>;
+  closeTrade: (
+    tradeId: string,
+    closeData: {
+      outcome: CloseOutcome;
+      exitPrice: number;
+      realizedPnl: number;
+      grossRealizedPnl?: number;
+      commission?: number;
+      swap?: number;
+      closedDate: string;
+      closedAt: string;
+      notes?: string;
+    }
+  ) => Promise<void>;
   updateTrade: (trade: Trade) => Promise<void>;
   deleteTrade: (tradeId: string) => Promise<void>;
 
@@ -67,7 +101,6 @@ interface TradingContextType {
   selectedCalendarDate: string;
   setSelectedCalendarDate: (date: string) => void;
 
-  // Global modal triggers so any screen can open Account Manager, Add Trade, or Trade Detail
   isAccountModalOpen: boolean;
   setIsAccountModalOpen: (open: boolean) => void;
   isAddTradeModalOpen: boolean;
@@ -80,17 +113,62 @@ interface TradingContextType {
 
 const TradingContext = createContext<TradingContextType | undefined>(undefined);
 
-const STORAGE_KEYS = {
-  accounts: 'tradelog_dark_accounts_v4',
-  selectedAccount: 'tradelog_dark_selected_acc_v4',
-  trades: 'tradelog_dark_trades_v4',
-  journal: 'tradelog_dark_journal_v4',
-  rules: 'tradelog_dark_rules_v4',
-  specs: 'tradelog_dark_specs_v4',
-  rates: 'tradelog_dark_rates_v4'
-};
+const WORKSPACE_ID_STORAGE_KEY = 'tradelog_workspace_id_v1';
 
-function withTimeout<T>(promise: Promise<T>, ms = 12000, errorMsg = 'Database request timed out. Please check your connection.'): Promise<T> {
+function generateWorkspaceId(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let suffix = '';
+  for (let i = 0; i < 8; i++) {
+    suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `TL-${suffix}`;
+}
+
+function getInitialWorkspaceId(): string {
+  try {
+    const existing = localStorage.getItem(WORKSPACE_ID_STORAGE_KEY);
+    if (existing && /^[A-Za-z0-9_-]{4,64}$/.test(existing.trim())) {
+      return existing.trim().toUpperCase();
+    }
+  } catch {
+    // ignore storage errors
+  }
+  const fresh = generateWorkspaceId();
+  try {
+    localStorage.setItem(WORKSPACE_ID_STORAGE_KEY, fresh);
+  } catch {
+    // ignore storage errors
+  }
+  return fresh;
+}
+
+function getWorkspaceStorageKeys(wsId: string) {
+  const prefix = `tradelog_ws_${wsId}`;
+  return {
+    accounts: `${prefix}_accounts`,
+    selectedAccount: `${prefix}_selected_acc`,
+    trades: `${prefix}_trades`,
+    journal: `${prefix}_journal`,
+    rules: `${prefix}_rules`,
+    specs: `${prefix}_specs`,
+    rates: `${prefix}_rates`
+  };
+}
+
+function readCachedJson<T>(key: string, fallback: T): T {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? (JSON.parse(saved) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms = 12000,
+  errorMsg = 'Database request timed out. Please check your connection.'
+): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) => setTimeout(() => reject(new Error(errorMsg)), ms))
@@ -98,69 +176,48 @@ function withTimeout<T>(promise: Promise<T>, ms = 12000, errorMsg = 'Database re
 }
 
 export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [workspaceId, setWorkspaceId] = useState<string>(() => getInitialWorkspaceId());
+
   const [accounts, setAccounts] = useState<Account[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.accounts);
-      return saved ? JSON.parse(saved) : INITIAL_ACCOUNTS;
-    } catch {
-      return INITIAL_ACCOUNTS;
-    }
+    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
+    return readCachedJson<Account[]>(keys.accounts, []);
   });
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>(() => {
-    return localStorage.getItem(STORAGE_KEYS.selectedAccount) || INITIAL_ACCOUNTS[0].id;
+    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
+    return localStorage.getItem(keys.selectedAccount) || '';
   });
 
   const [trades, setTrades] = useState<Trade[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.trades);
-      return saved ? JSON.parse(saved) : INITIAL_TRADES;
-    } catch {
-      return INITIAL_TRADES;
-    }
+    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
+    return readCachedJson<Trade[]>(keys.trades, []);
   });
 
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
 
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.journal);
-      return saved ? JSON.parse(saved) : INITIAL_JOURNAL;
-    } catch {
-      return INITIAL_JOURNAL;
-    }
+    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
+    return readCachedJson<JournalEntry[]>(keys.journal, []);
   });
 
   const [rules, setRules] = useState<TradingRule[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.rules);
-      return saved ? JSON.parse(saved) : INITIAL_RULES;
-    } catch {
-      return INITIAL_RULES;
-    }
+    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
+    return readCachedJson<TradingRule[]>(keys.rules, []);
   });
 
   const [instrumentSpecs, setInstrumentSpecs] = useState<Record<string, InstrumentSpec>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.specs);
-      return saved ? JSON.parse(saved) : STARTER_INSTRUMENT_SPECS;
-    } catch {
-      return STARTER_INSTRUMENT_SPECS;
-    }
+    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
+    return readCachedJson<Record<string, InstrumentSpec>>(keys.specs, STARTER_INSTRUMENT_SPECS);
   });
 
   const [exchangeRates, setExchangeRates] = useState<ExchangeRateMap>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.rates);
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
+    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
+    return readCachedJson<ExchangeRateMap>(keys.rates, {});
   });
 
   const [specModalSymbol, setSpecModalSymbol] = useState<string | null>(null);
 
-  // Default to 'journal' (center "My Journal" tab, matching reference screenshot)
+  // Default to 'journal' (center "My Journal" tab)
   const [activeTab, setActiveTab] = useState<ActiveTab>('journal');
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>(
     new Date().toISOString().split('T')[0]
@@ -170,185 +227,180 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [journalViewMode, setJournalViewMode] = useState<'weekly' | 'calendar'>('weekly');
   const [firestoreStatus, setFirestoreStatus] = useState<'connected' | 'syncing' | 'offline'>('syncing');
 
-  const seededRef = useRef({
-    trades: false,
-    accounts: false,
-    rules: false,
-    journal: false,
-    specs: false
-  });
-
-  // LocalStorage Persistence
+  // LocalStorage Persistence scoped per workspaceId
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.accounts, JSON.stringify(accounts));
-  }, [accounts]);
+    const keys = getWorkspaceStorageKeys(workspaceId);
+    localStorage.setItem(keys.accounts, JSON.stringify(accounts));
+  }, [workspaceId, accounts]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.selectedAccount, selectedAccountId);
-  }, [selectedAccountId]);
+    const keys = getWorkspaceStorageKeys(workspaceId);
+    localStorage.setItem(keys.selectedAccount, selectedAccountId);
+  }, [workspaceId, selectedAccountId]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.trades, JSON.stringify(trades));
-  }, [trades]);
+    const keys = getWorkspaceStorageKeys(workspaceId);
+    localStorage.setItem(keys.trades, JSON.stringify(trades));
+  }, [workspaceId, trades]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.journal, JSON.stringify(journalEntries));
-  }, [journalEntries]);
+    const keys = getWorkspaceStorageKeys(workspaceId);
+    localStorage.setItem(keys.journal, JSON.stringify(journalEntries));
+  }, [workspaceId, journalEntries]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.rules, JSON.stringify(rules));
-  }, [rules]);
+    const keys = getWorkspaceStorageKeys(workspaceId);
+    localStorage.setItem(keys.rules, JSON.stringify(rules));
+  }, [workspaceId, rules]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.specs, JSON.stringify(instrumentSpecs));
-  }, [instrumentSpecs]);
+    const keys = getWorkspaceStorageKeys(workspaceId);
+    localStorage.setItem(keys.specs, JSON.stringify(instrumentSpecs));
+  }, [workspaceId, instrumentSpecs]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.rates, JSON.stringify(exchangeRates));
-  }, [exchangeRates]);
+    const keys = getWorkspaceStorageKeys(workspaceId);
+    localStorage.setItem(keys.rates, JSON.stringify(exchangeRates));
+  }, [workspaceId, exchangeRates]);
 
   // Ensure selectedAccountId always points to an existing account
   useEffect(() => {
-    if (selectedAccountId !== 'all' && accounts.length > 0) {
-      const exists = accounts.some(a => a.id === selectedAccountId);
+    if (accounts.length === 0) {
+      if (selectedAccountId !== '') {
+        setSelectedAccountId('');
+      }
+      return;
+    }
+    if (selectedAccountId !== 'all') {
+      const exists = accounts.some((a) => a.id === selectedAccountId);
       if (!exists) {
         setSelectedAccountId(accounts[0].id);
       }
     }
   }, [accounts, selectedAccountId]);
 
-  // Real-time Firestore sync across all 4 collections
+  // Real-time Firestore sync isolated to workspaces/{workspaceId}/...
   useEffect(() => {
     const unsubs: (() => void)[] = [];
+    setFirestoreStatus('syncing');
 
     try {
       // 1. Trades
       unsubs.push(
-        onSnapshot(collection(db, 'trades'), async (snapshot) => {
-          setFirestoreStatus('connected');
-          if (!snapshot.empty) {
+        onSnapshot(
+          collection(db, 'workspaces', workspaceId, 'trades'),
+          (snapshot) => {
+            setFirestoreStatus('connected');
             const list: Trade[] = [];
-            snapshot.forEach(docSnap => {
-              if (docSnap.id === 'test-probe') return;
+            snapshot.forEach((docSnap) => {
               list.push({ id: docSnap.id, ...docSnap.data() } as Trade);
             });
-            if (list.length > 0) {
-              list.sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
-              setTrades(list);
-            }
-          } else if (!seededRef.current.trades) {
-            seededRef.current.trades = true;
-            for (const item of INITIAL_TRADES) {
-              await setDoc(doc(db, 'trades', item.id), sanitizeForFirestore(item)).catch(() => {});
-            }
+            list.sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+            setTrades(list);
+          },
+          (err) => {
+            console.warn('Firestore trades listener notice:', err.message);
+            setFirestoreStatus('offline');
           }
-        }, (err) => {
-          console.warn('Firestore trades listener notice:', err.message);
-          setFirestoreStatus('offline');
-        })
+        )
       );
 
       // 2. Accounts
       unsubs.push(
-        onSnapshot(collection(db, 'accounts'), async (snapshot) => {
-          if (!snapshot.empty) {
+        onSnapshot(
+          collection(db, 'workspaces', workspaceId, 'accounts'),
+          (snapshot) => {
+            setFirestoreStatus('connected');
             const list: Account[] = [];
-            snapshot.forEach(docSnap => {
+            snapshot.forEach((docSnap) => {
               list.push({ id: docSnap.id, ...docSnap.data() } as Account);
             });
-            if (list.length > 0) {
-              setAccounts(list);
-            }
-          } else if (!seededRef.current.accounts) {
-            seededRef.current.accounts = true;
-            for (const item of INITIAL_ACCOUNTS) {
-              await setDoc(doc(db, 'accounts', item.id), sanitizeForFirestore(item)).catch(() => {});
-            }
+            list.sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
+            setAccounts(list);
+          },
+          (err) => {
+            console.warn('Firestore accounts listener notice:', err.message);
+            setFirestoreStatus('offline');
           }
-        }, (err) => {
-          console.warn('Firestore accounts listener notice:', err.message);
-        })
+        )
       );
 
       // 3. Trading Rules
       unsubs.push(
-        onSnapshot(collection(db, 'rules'), async (snapshot) => {
-          if (!snapshot.empty) {
+        onSnapshot(
+          collection(db, 'workspaces', workspaceId, 'rules'),
+          (snapshot) => {
             const list: TradingRule[] = [];
-            snapshot.forEach(docSnap => {
+            snapshot.forEach((docSnap) => {
               list.push({ id: docSnap.id, ...docSnap.data() } as TradingRule);
             });
             setRules(list);
-          } else if (!seededRef.current.rules) {
-            seededRef.current.rules = true;
-            for (const item of INITIAL_RULES) {
-              await setDoc(doc(db, 'rules', item.id), sanitizeForFirestore(item)).catch(() => {});
-            }
+          },
+          (err) => {
+            console.warn('Firestore rules listener notice:', err.message);
           }
-        }, (err) => {
-          console.warn('Firestore rules listener notice:', err.message);
-        })
+        )
       );
 
       // 4. Journal Entries
       unsubs.push(
-        onSnapshot(collection(db, 'journal'), async (snapshot) => {
-          if (!snapshot.empty) {
+        onSnapshot(
+          collection(db, 'workspaces', workspaceId, 'journal'),
+          (snapshot) => {
             const list: JournalEntry[] = [];
-            snapshot.forEach(docSnap => {
+            snapshot.forEach((docSnap) => {
               list.push({ id: docSnap.id, ...docSnap.data() } as JournalEntry);
             });
             list.sort((a, b) => b.date.localeCompare(a.date));
             setJournalEntries(list);
-          } else if (!seededRef.current.journal) {
-            seededRef.current.journal = true;
-            for (const item of INITIAL_JOURNAL) {
-              await setDoc(doc(db, 'journal', item.id), sanitizeForFirestore(item)).catch(() => {});
-            }
+          },
+          (err) => {
+            console.warn('Firestore journal listener notice:', err.message);
           }
-        }, (err) => {
-          console.warn('Firestore journal listener notice:', err.message);
-        })
+        )
       );
 
-      // 5. Broker Instrument Specifications
+      // 5. Broker Instrument Specifications (starter presets + user's saved overrides)
       unsubs.push(
-        onSnapshot(collection(db, 'instrumentSpecs'), async (snapshot) => {
-          if (!snapshot.empty) {
-            const map: Record<string, InstrumentSpec> = {};
-            snapshot.forEach(docSnap => {
+        onSnapshot(
+          collection(db, 'workspaces', workspaceId, 'instrumentSpecs'),
+          (snapshot) => {
+            const customMap: Record<string, InstrumentSpec> = {};
+            snapshot.forEach((docSnap) => {
               const data = docSnap.data() as InstrumentSpec;
               const key = (data.symbol || docSnap.id).toUpperCase().trim();
-              map[key] = { ...data, symbol: key };
+              customMap[key] = { ...data, symbol: key };
             });
-            setInstrumentSpecs(map);
-          } else if (!seededRef.current.specs) {
-            seededRef.current.specs = true;
-            for (const spec of Object.values(STARTER_INSTRUMENT_SPECS)) {
-              await setDoc(doc(db, 'instrumentSpecs', spec.symbol), sanitizeForFirestore(spec)).catch(() => {});
-            }
+            setInstrumentSpecs({ ...STARTER_INSTRUMENT_SPECS, ...customMap });
+          },
+          (err) => {
+            console.warn('Firestore instrumentSpecs listener notice:', err.message);
           }
-        }, (err) => {
-          console.warn('Firestore instrumentSpecs listener notice:', err.message);
-        })
+        )
       );
 
       // 6. User-Configured Currency Conversion Rates
       unsubs.push(
-        onSnapshot(doc(db, 'exchangeRates', 'rates'), (docSnap) => {
-          if (docSnap.exists()) {
-            const raw = docSnap.data() as Record<string, unknown>;
-            const cleanRates: ExchangeRateMap = {};
-            for (const [k, v] of Object.entries(raw)) {
-              if (typeof v === 'number' && v > 0) {
-                cleanRates[k] = v;
+        onSnapshot(
+          doc(db, 'workspaces', workspaceId, 'exchangeRates', 'rates'),
+          (docSnap) => {
+            if (docSnap.exists()) {
+              const raw = docSnap.data() as Record<string, unknown>;
+              const cleanRates: ExchangeRateMap = {};
+              for (const [k, v] of Object.entries(raw)) {
+                if (typeof v === 'number' && v > 0) {
+                  cleanRates[k] = v;
+                }
               }
+              setExchangeRates(cleanRates);
+            } else {
+              setExchangeRates({});
             }
-            setExchangeRates(cleanRates);
+          },
+          (err) => {
+            console.warn('Firestore exchangeRates listener notice:', err.message);
           }
-        }, (err) => {
-          console.warn('Firestore exchangeRates listener notice:', err.message);
-        })
+        )
       );
     } catch (e) {
       console.warn('Firestore setup warning:', e);
@@ -356,22 +408,63 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     return () => {
-      unsubs.forEach(u => u());
+      unsubs.forEach((u) => u());
     };
-  }, []);
+  }, [workspaceId]);
+
+  const switchWorkspace = async (syncKeyInput: string): Promise<void> => {
+    const cleanId = syncKeyInput.trim().toUpperCase();
+    if (!/^[A-Z0-9_-]{4,64}$/.test(cleanId)) {
+      throw new Error('Please enter a valid Sync Key (4–64 letters, numbers, hyphens, or underscores).');
+    }
+    if (cleanId === workspaceId) {
+      return;
+    }
+
+    const accountsSnap = await withTimeout(
+      getDocs(collection(db, 'workspaces', cleanId, 'accounts'))
+    );
+    if (accountsSnap.empty) {
+      throw new Error('No accounts found for that Sync Key. Check the key or create a new account.');
+    }
+
+    const loadedAccounts: Account[] = accountsSnap.docs.map(
+      (docSnap) => ({ id: docSnap.id, ...docSnap.data() } as Account)
+    );
+    loadedAccounts.sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
+
+    localStorage.setItem(WORKSPACE_ID_STORAGE_KEY, cleanId);
+    setSelectedTradeId(null);
+    setTrades([]);
+    setJournalEntries([]);
+    setRules([]);
+    setExchangeRates({});
+    setInstrumentSpecs(STARTER_INSTRUMENT_SPECS);
+    setAccounts(loadedAccounts);
+    setSelectedAccountId(loadedAccounts[0]?.id || '');
+    setWorkspaceId(cleanId);
+  };
 
   // Filtered trades by account
-  const filteredTrades = selectedAccountId === 'all'
-    ? trades
-    : trades.filter(t => t.accountId === selectedAccountId);
+  const filteredTrades =
+    selectedAccountId === 'all'
+      ? trades
+      : trades.filter((t) => t.accountId === selectedAccountId);
 
-  const activeAccount = selectedAccountId === 'all'
-    ? undefined
-    : (accounts.find(a => a.id === selectedAccountId) || accounts[0]);
-  const selectedTrade = trades.find(t => t.id === selectedTradeId);
+  const activeAccount =
+    selectedAccountId === 'all'
+      ? undefined
+      : accounts.find((a) => a.id === selectedAccountId) || accounts[0];
+  const selectedTrade = trades.find((t) => t.id === selectedTradeId);
 
   // Account Actions
-  const addAccount = async (data: { name: string; type: Account['type']; broker?: string; startingBalance: number; currency: Account['currency'] }): Promise<Account> => {
+  const addAccount = async (data: {
+    name: string;
+    type: Account['type'];
+    broker?: string;
+    startingBalance: number;
+    currency: Account['currency'];
+  }): Promise<Account> => {
     if (!data.name.trim()) {
       throw new Error('Please enter an account name.');
     }
@@ -388,13 +481,15 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     try {
-      await withTimeout(setDoc(doc(db, 'accounts', newAcc.id), sanitizeForFirestore(newAcc)));
+      await withTimeout(
+        setDoc(doc(db, 'workspaces', workspaceId, 'accounts', newAcc.id), sanitizeForFirestore(newAcc))
+      );
     } catch (err: any) {
       throw new Error(err?.message || 'Failed to save account to Firestore.');
     }
 
-    setAccounts(prev => {
-      if (prev.some(a => a.id === newAcc.id)) return prev;
+    setAccounts((prev) => {
+      if (prev.some((a) => a.id === newAcc.id)) return prev;
       return [...prev, newAcc];
     });
     setSelectedAccountId(newAcc.id);
@@ -411,7 +506,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       currentBalance?: number;
     }
   ) => {
-    const target = accounts.find(a => a.id === accountId);
+    const target = accounts.find((a) => a.id === accountId);
     if (!target) {
       throw new Error('Account not found.');
     }
@@ -436,12 +531,17 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     try {
-      await withTimeout(setDoc(doc(db, 'accounts', accountId), sanitizeForFirestore(updatedAccount)));
+      await withTimeout(
+        setDoc(
+          doc(db, 'workspaces', workspaceId, 'accounts', accountId),
+          sanitizeForFirestore(updatedAccount)
+        )
+      );
     } catch (err: any) {
       throw new Error(err?.message || 'Failed to update account in Firestore.');
     }
 
-    setAccounts(prev => prev.map(a => (a.id === accountId ? updatedAccount : a)));
+    setAccounts((prev) => prev.map((a) => (a.id === accountId ? updatedAccount : a)));
   };
 
   const updateAccountBalance = async (accountId: string, newBalance: number) => {
@@ -452,9 +552,9 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (accounts.length <= 1) {
       throw new Error('You must keep at least one trading account.');
     }
-    await withTimeout(deleteDoc(doc(db, 'accounts', accountId)));
-    setAccounts(prev => {
-      const next = prev.filter(a => a.id !== accountId);
+    await withTimeout(deleteDoc(doc(db, 'workspaces', workspaceId, 'accounts', accountId)));
+    setAccounts((prev) => {
+      const next = prev.filter((a) => a.id !== accountId);
       if (selectedAccountId === accountId && next.length > 0) {
         setSelectedAccountId(next[0].id);
       }
@@ -463,7 +563,12 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Trade Actions
-  const addTrade = async (tradeData: Omit<Trade, 'id' | 'status' | 'realizedPnl'> & { realizedPnl?: number; status?: 'Open' | 'Closed' }): Promise<Trade> => {
+  const addTrade = async (
+    tradeData: Omit<Trade, 'id' | 'status' | 'realizedPnl'> & {
+      realizedPnl?: number;
+      status?: 'Open' | 'Closed';
+    }
+  ): Promise<Trade> => {
     if (!tradeData.asset || !tradeData.asset.trim()) {
       throw new Error('Please enter an instrument symbol (e.g. XAUUSD, EURUSD, BTCUSD).');
     }
@@ -485,14 +590,20 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       status: 'Open',
       realizedPnl: 0,
       date: tradeData.date || new Date().toISOString().split('T')[0],
-      time: tradeData.time || new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+      time:
+        tradeData.time ||
+        new Date().toLocaleTimeString('en-US', {
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit'
+        })
     };
 
     const cleanPayload = sanitizeForFirestore(newTrade);
-    await withTimeout(setDoc(doc(db, 'trades', newTradeId), cleanPayload));
+    await withTimeout(setDoc(doc(db, 'workspaces', workspaceId, 'trades', newTradeId), cleanPayload));
 
-    setTrades(prev => {
-      if (prev.some(t => t.id === newTradeId)) return prev;
+    setTrades((prev) => {
+      if (prev.some((t) => t.id === newTradeId)) return prev;
       return [newTrade, ...prev];
     });
     return newTrade;
@@ -512,7 +623,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       notes?: string;
     }
   ) => {
-    const target = trades.find(t => t.id === tradeId);
+    const target = trades.find((t) => t.id === tradeId);
     if (!target) throw new Error('Trade not found.');
 
     const updated: Trade = {
@@ -527,18 +638,22 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       closedDate: closeData.closedDate,
       closedAt: closeData.closedAt,
       notes: closeData.notes
-        ? (target.notes ? `${target.notes}\n\n[Closed]: ${closeData.notes}` : closeData.notes)
+        ? target.notes
+          ? `${target.notes}\n\n[Closed]: ${closeData.notes}`
+          : closeData.notes
         : target.notes
     };
 
-    await withTimeout(setDoc(doc(db, 'trades', tradeId), sanitizeForFirestore(updated)));
-    setTrades(prev => prev.map(t => t.id === tradeId ? updated : t));
+    await withTimeout(
+      setDoc(doc(db, 'workspaces', workspaceId, 'trades', tradeId), sanitizeForFirestore(updated))
+    );
+    setTrades((prev) => prev.map((t) => (t.id === tradeId ? updated : t)));
 
     if (target.status === 'Open') {
-      const targetAccount = accounts.find(a => a.id === target.accountId);
+      const targetAccount = accounts.find((a) => a.id === target.accountId);
       if (targetAccount) {
         const newBal = Number((targetAccount.currentBalance + closeData.realizedPnl).toFixed(2));
-        await updateAccountBalance(targetAccount.id, newBal).catch(err => {
+        await updateAccountBalance(targetAccount.id, newBal).catch((err) => {
           console.warn('Account balance update warning:', err);
         });
       }
@@ -546,7 +661,7 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateTrade = async (updated: Trade) => {
-    const oldTrade = trades.find(t => t.id === updated.id);
+    const oldTrade = trades.find((t) => t.id === updated.id);
     let pnlDelta = 0;
     if (oldTrade) {
       if (oldTrade.status === 'Closed' && updated.status === 'Closed') {
@@ -558,29 +673,36 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     }
 
-    await withTimeout(setDoc(doc(db, 'trades', updated.id), sanitizeForFirestore(updated)));
-    setTrades(prev => prev.map(t => t.id === updated.id ? updated : t));
+    await withTimeout(
+      setDoc(doc(db, 'workspaces', workspaceId, 'trades', updated.id), sanitizeForFirestore(updated))
+    );
+    setTrades((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
 
     if (pnlDelta !== 0) {
-      const acc = accounts.find(a => a.id === updated.accountId);
+      const acc = accounts.find((a) => a.id === updated.accountId);
       if (acc) {
-        await updateAccountBalance(acc.id, Number((acc.currentBalance + pnlDelta).toFixed(2))).catch(() => {});
+        await updateAccountBalance(acc.id, Number((acc.currentBalance + pnlDelta).toFixed(2))).catch(
+          () => {}
+        );
       }
     }
   };
 
   const deleteTrade = async (tradeId: string) => {
-    const target = trades.find(t => t.id === tradeId);
-    await withTimeout(deleteDoc(doc(db, 'trades', tradeId)));
+    const target = trades.find((t) => t.id === tradeId);
+    await withTimeout(deleteDoc(doc(db, 'workspaces', workspaceId, 'trades', tradeId)));
 
     if (target && target.status === 'Closed' && target.realizedPnl) {
-      const acc = accounts.find(a => a.id === target.accountId);
+      const acc = accounts.find((a) => a.id === target.accountId);
       if (acc) {
-        await updateAccountBalance(acc.id, Number((acc.currentBalance - target.realizedPnl).toFixed(2))).catch(() => {});
+        await updateAccountBalance(
+          acc.id,
+          Number((acc.currentBalance - target.realizedPnl).toFixed(2))
+        ).catch(() => {});
       }
     }
 
-    setTrades(prev => prev.filter(t => t.id !== tradeId));
+    setTrades((prev) => prev.filter((t) => t.id !== tradeId));
     if (selectedTradeId === tradeId) setSelectedTradeId(null);
   };
 
@@ -594,17 +716,19 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       id: `j-${Date.now()}`
     };
 
-    await withTimeout(setDoc(doc(db, 'journal', newEntry.id), sanitizeForFirestore(newEntry)));
-    setJournalEntries(prev => {
-      if (prev.some(j => j.id === newEntry.id)) return prev;
+    await withTimeout(
+      setDoc(doc(db, 'workspaces', workspaceId, 'journal', newEntry.id), sanitizeForFirestore(newEntry))
+    );
+    setJournalEntries((prev) => {
+      if (prev.some((j) => j.id === newEntry.id)) return prev;
       return [newEntry, ...prev];
     });
     return newEntry;
   };
 
   const deleteJournalEntry = async (id: string) => {
-    await withTimeout(deleteDoc(doc(db, 'journal', id)));
-    setJournalEntries(prev => prev.filter(j => j.id !== id));
+    await withTimeout(deleteDoc(doc(db, 'workspaces', workspaceId, 'journal', id)));
+    setJournalEntries((prev) => prev.filter((j) => j.id !== id));
   };
 
   // Rules management
@@ -619,26 +743,30 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       isActive: true
     };
 
-    await withTimeout(setDoc(doc(db, 'rules', newRule.id), sanitizeForFirestore(newRule)));
-    setRules(prev => {
-      if (prev.some(r => r.id === newRule.id)) return prev;
+    await withTimeout(
+      setDoc(doc(db, 'workspaces', workspaceId, 'rules', newRule.id), sanitizeForFirestore(newRule))
+    );
+    setRules((prev) => {
+      if (prev.some((r) => r.id === newRule.id)) return prev;
       return [...prev, newRule];
     });
     return newRule;
   };
 
   const toggleRule = async (id: string) => {
-    const target = rules.find(r => r.id === id);
+    const target = rules.find((r) => r.id === id);
     if (!target) return;
     const updated = { ...target, isActive: !target.isActive };
 
-    setRules(prev => prev.map(r => r.id === id ? updated : r));
-    await withTimeout(setDoc(doc(db, 'rules', id), sanitizeForFirestore(updated)));
+    setRules((prev) => prev.map((r) => (r.id === id ? updated : r)));
+    await withTimeout(
+      setDoc(doc(db, 'workspaces', workspaceId, 'rules', id), sanitizeForFirestore(updated))
+    );
   };
 
   const deleteRule = async (id: string) => {
-    await withTimeout(deleteDoc(doc(db, 'rules', id)));
-    setRules(prev => prev.filter(r => r.id !== id));
+    await withTimeout(deleteDoc(doc(db, 'workspaces', workspaceId, 'rules', id)));
+    setRules((prev) => prev.filter((r) => r.id !== id));
   };
 
   // Instrument Specification Management (Persisted to Firestore)
@@ -670,17 +798,26 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       updatedAt: new Date().toISOString()
     };
 
-    await withTimeout(setDoc(doc(db, 'instrumentSpecs', cleanSymbol), sanitizeForFirestore(normalized)));
-    setInstrumentSpecs(prev => ({ ...prev, [cleanSymbol]: normalized }));
+    await withTimeout(
+      setDoc(
+        doc(db, 'workspaces', workspaceId, 'instrumentSpecs', cleanSymbol),
+        sanitizeForFirestore(normalized)
+      )
+    );
+    setInstrumentSpecs((prev) => ({ ...prev, [cleanSymbol]: normalized }));
     return normalized;
   };
 
   const deleteInstrumentSpec = async (symbol: string) => {
     const cleanSymbol = symbol.toUpperCase().trim();
-    await withTimeout(deleteDoc(doc(db, 'instrumentSpecs', cleanSymbol)));
-    setInstrumentSpecs(prev => {
+    await withTimeout(deleteDoc(doc(db, 'workspaces', workspaceId, 'instrumentSpecs', cleanSymbol)));
+    setInstrumentSpecs((prev) => {
       const next = { ...prev };
-      delete next[cleanSymbol];
+      if (STARTER_INSTRUMENT_SPECS[cleanSymbol]) {
+        next[cleanSymbol] = STARTER_INSTRUMENT_SPECS[cleanSymbol];
+      } else {
+        delete next[cleanSymbol];
+      }
       return next;
     });
   };
@@ -692,20 +829,33 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       throw new Error('Please enter a valid positive exchange rate.');
     }
     const nextRates = { ...exchangeRates, [cleanKey]: rate };
-    await withTimeout(setDoc(doc(db, 'exchangeRates', 'rates'), sanitizeForFirestore(nextRates)));
+    await withTimeout(
+      setDoc(
+        doc(db, 'workspaces', workspaceId, 'exchangeRates', 'rates'),
+        sanitizeForFirestore(nextRates)
+      )
+    );
     setExchangeRates(nextRates);
   };
 
   const deleteExchangeRate = async (pairKey: string) => {
     const nextRates = { ...exchangeRates };
     delete nextRates[pairKey];
-    await withTimeout(setDoc(doc(db, 'exchangeRates', 'rates'), sanitizeForFirestore(nextRates)));
+    await withTimeout(
+      setDoc(
+        doc(db, 'workspaces', workspaceId, 'exchangeRates', 'rates'),
+        sanitizeForFirestore(nextRates)
+      )
+    );
     setExchangeRates(nextRates);
   };
 
   return (
     <TradingContext.Provider
       value={{
+        workspaceId,
+        switchWorkspace,
+
         accounts,
         selectedAccountId,
         setSelectedAccountId,
