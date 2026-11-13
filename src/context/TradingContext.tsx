@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { Account, Trade, JournalEntry, TradingRule, ActiveTab, CloseOutcome } from '../types/trading';
+import { Account, Trade, JournalEntry, TradingRule, ActiveTab, CloseOutcome, InstrumentSpec, ExchangeRateMap } from '../types/trading';
 import { INITIAL_ACCOUNTS, INITIAL_TRADES, INITIAL_JOURNAL, INITIAL_RULES } from '../data/mockData';
+import { STARTER_INSTRUMENT_SPECS } from '../utils/calculations';
 import { db, sanitizeForFirestore } from '../lib/firebase';
 import { 
   collection, 
@@ -16,8 +17,10 @@ interface TradingContextType {
   selectedAccountId: string;
   setSelectedAccountId: (id: string) => void;
   activeAccount: Account | undefined;
-  addAccount: (account: { name: string; type: Account['type']; broker?: string; startingBalance: number; currency: Account['currency'] }) => Promise<void>;
+  addAccount: (account: { name: string; type: Account['type']; broker?: string; startingBalance: number; currency: Account['currency'] }) => Promise<Account>;
+  updateAccount: (accountId: string, updates: { name?: string; type?: Account['type']; broker?: string; currency?: Account['currency']; currentBalance?: number }) => Promise<void>;
   updateAccountBalance: (accountId: string, newBalance: number) => Promise<void>;
+  deleteAccount: (accountId: string) => Promise<void>;
 
   trades: Trade[];
   filteredTrades: Trade[];
@@ -26,6 +29,9 @@ interface TradingContextType {
     outcome: CloseOutcome;
     exitPrice: number;
     realizedPnl: number;
+    grossRealizedPnl?: number;
+    commission?: number;
+    swap?: number;
     closedDate: string;
     closedAt: string;
     notes?: string;
@@ -46,113 +52,311 @@ interface TradingContextType {
   toggleRule: (id: string) => Promise<void>;
   deleteRule: (id: string) => Promise<void>;
 
+  instrumentSpecs: Record<string, InstrumentSpec>;
+  saveInstrumentSpec: (spec: InstrumentSpec) => Promise<InstrumentSpec>;
+  deleteInstrumentSpec: (symbol: string) => Promise<void>;
+  exchangeRates: ExchangeRateMap;
+  saveExchangeRate: (pairKey: string, rate: number) => Promise<void>;
+  deleteExchangeRate: (pairKey: string) => Promise<void>;
+  specModalSymbol: string | null;
+  setSpecModalSymbol: (symbol: string | null) => void;
+
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
 
   selectedCalendarDate: string;
   setSelectedCalendarDate: (date: string) => void;
 
+  // Global modal triggers so any screen can open Account Manager, Add Trade, or Trade Detail
+  isAccountModalOpen: boolean;
+  setIsAccountModalOpen: (open: boolean) => void;
+  isAddTradeModalOpen: boolean;
+  setIsAddTradeModalOpen: (open: boolean) => void;
+  journalViewMode: 'weekly' | 'calendar';
+  setJournalViewMode: (mode: 'weekly' | 'calendar') => void;
+
   firestoreStatus: 'connected' | 'syncing' | 'offline';
 }
 
 const TradingContext = createContext<TradingContextType | undefined>(undefined);
 
+const STORAGE_KEYS = {
+  accounts: 'tradelog_dark_accounts_v4',
+  selectedAccount: 'tradelog_dark_selected_acc_v4',
+  trades: 'tradelog_dark_trades_v4',
+  journal: 'tradelog_dark_journal_v4',
+  rules: 'tradelog_dark_rules_v4',
+  specs: 'tradelog_dark_specs_v4',
+  rates: 'tradelog_dark_rates_v4'
+};
+
+function withTimeout<T>(promise: Promise<T>, ms = 12000, errorMsg = 'Database request timed out. Please check your connection.'): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(errorMsg)), ms))
+  ]);
+}
+
 export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [accounts, setAccounts] = useState<Account[]>(() => {
-    const saved = localStorage.getItem('tradelog_glass_accounts_v3');
-    return saved ? JSON.parse(saved) : INITIAL_ACCOUNTS;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.accounts);
+      return saved ? JSON.parse(saved) : INITIAL_ACCOUNTS;
+    } catch {
+      return INITIAL_ACCOUNTS;
+    }
   });
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>(() => {
-    const saved = localStorage.getItem('tradelog_glass_selected_acc_v3');
-    return saved || 'acc-ftmo';
+    return localStorage.getItem(STORAGE_KEYS.selectedAccount) || INITIAL_ACCOUNTS[0].id;
   });
 
   const [trades, setTrades] = useState<Trade[]>(() => {
-    const saved = localStorage.getItem('tradelog_glass_trades_v3');
-    return saved ? JSON.parse(saved) : INITIAL_TRADES;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.trades);
+      return saved ? JSON.parse(saved) : INITIAL_TRADES;
+    } catch {
+      return INITIAL_TRADES;
+    }
   });
 
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
 
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
-    const saved = localStorage.getItem('tradelog_glass_journal_v3');
-    return saved ? JSON.parse(saved) : INITIAL_JOURNAL;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.journal);
+      return saved ? JSON.parse(saved) : INITIAL_JOURNAL;
+    } catch {
+      return INITIAL_JOURNAL;
+    }
   });
 
   const [rules, setRules] = useState<TradingRule[]>(() => {
-    const saved = localStorage.getItem('tradelog_glass_rules_v3');
-    return saved ? JSON.parse(saved) : INITIAL_RULES;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.rules);
+      return saved ? JSON.parse(saved) : INITIAL_RULES;
+    } catch {
+      return INITIAL_RULES;
+    }
   });
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>('calendar');
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>('2026-11-11');
+  const [instrumentSpecs, setInstrumentSpecs] = useState<Record<string, InstrumentSpec>>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.specs);
+      return saved ? JSON.parse(saved) : STARTER_INSTRUMENT_SPECS;
+    } catch {
+      return STARTER_INSTRUMENT_SPECS;
+    }
+  });
+
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRateMap>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.rates);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [specModalSymbol, setSpecModalSymbol] = useState<string | null>(null);
+
+  // Default to 'journal' (center "My Journal" tab, matching reference screenshot)
+  const [activeTab, setActiveTab] = useState<ActiveTab>('journal');
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [isAddTradeModalOpen, setIsAddTradeModalOpen] = useState(false);
+  const [journalViewMode, setJournalViewMode] = useState<'weekly' | 'calendar'>('weekly');
   const [firestoreStatus, setFirestoreStatus] = useState<'connected' | 'syncing' | 'offline'>('syncing');
 
-  const hasSeededTradesRef = useRef(false);
+  const seededRef = useRef({
+    trades: false,
+    accounts: false,
+    rules: false,
+    journal: false,
+    specs: false
+  });
 
-  // Persistence to LocalStorage
+  // LocalStorage Persistence
   useEffect(() => {
-    localStorage.setItem('tradelog_glass_accounts_v3', JSON.stringify(accounts));
+    localStorage.setItem(STORAGE_KEYS.accounts, JSON.stringify(accounts));
   }, [accounts]);
 
   useEffect(() => {
-    localStorage.setItem('tradelog_glass_selected_acc_v3', selectedAccountId);
+    localStorage.setItem(STORAGE_KEYS.selectedAccount, selectedAccountId);
   }, [selectedAccountId]);
 
   useEffect(() => {
-    localStorage.setItem('tradelog_glass_trades_v3', JSON.stringify(trades));
+    localStorage.setItem(STORAGE_KEYS.trades, JSON.stringify(trades));
   }, [trades]);
 
   useEffect(() => {
-    localStorage.setItem('tradelog_glass_journal_v3', JSON.stringify(journalEntries));
+    localStorage.setItem(STORAGE_KEYS.journal, JSON.stringify(journalEntries));
   }, [journalEntries]);
 
   useEffect(() => {
-    localStorage.setItem('tradelog_glass_rules_v3', JSON.stringify(rules));
+    localStorage.setItem(STORAGE_KEYS.rules, JSON.stringify(rules));
   }, [rules]);
 
-  // Real-time Firestore sync for trades
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-    try {
-      const tradesRef = collection(db, 'trades');
-      unsubscribe = onSnapshot(tradesRef, async (snapshot) => {
-        setFirestoreStatus('connected');
-        if (!snapshot.empty) {
-          const firestoreTrades: Trade[] = [];
-          snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            // Ignore test probes
-            if (docSnap.id === 'test-probe') return;
-            firestoreTrades.push({
-              id: docSnap.id,
-              ...data
-            } as Trade);
-          });
+    localStorage.setItem(STORAGE_KEYS.specs, JSON.stringify(instrumentSpecs));
+  }, [instrumentSpecs]);
 
-          if (firestoreTrades.length > 0) {
-            setTrades(firestoreTrades);
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.rates, JSON.stringify(exchangeRates));
+  }, [exchangeRates]);
+
+  // Ensure selectedAccountId always points to an existing account
+  useEffect(() => {
+    if (selectedAccountId !== 'all' && accounts.length > 0) {
+      const exists = accounts.some(a => a.id === selectedAccountId);
+      if (!exists) {
+        setSelectedAccountId(accounts[0].id);
+      }
+    }
+  }, [accounts, selectedAccountId]);
+
+  // Real-time Firestore sync across all 4 collections
+  useEffect(() => {
+    const unsubs: (() => void)[] = [];
+
+    try {
+      // 1. Trades
+      unsubs.push(
+        onSnapshot(collection(db, 'trades'), async (snapshot) => {
+          setFirestoreStatus('connected');
+          if (!snapshot.empty) {
+            const list: Trade[] = [];
+            snapshot.forEach(docSnap => {
+              if (docSnap.id === 'test-probe') return;
+              list.push({ id: docSnap.id, ...docSnap.data() } as Trade);
+            });
+            if (list.length > 0) {
+              list.sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+              setTrades(list);
+            }
+          } else if (!seededRef.current.trades) {
+            seededRef.current.trades = true;
+            for (const item of INITIAL_TRADES) {
+              await setDoc(doc(db, 'trades', item.id), sanitizeForFirestore(item)).catch(() => {});
+            }
           }
-        } else if (!hasSeededTradesRef.current) {
-          // Seed initial trades to Firestore so the user's database is initialized
-          hasSeededTradesRef.current = true;
-          for (const initTrade of INITIAL_TRADES) {
-            const clean = sanitizeForFirestore(initTrade);
-            await setDoc(doc(db, 'trades', initTrade.id), clean).catch(() => {});
+        }, (err) => {
+          console.warn('Firestore trades listener notice:', err.message);
+          setFirestoreStatus('offline');
+        })
+      );
+
+      // 2. Accounts
+      unsubs.push(
+        onSnapshot(collection(db, 'accounts'), async (snapshot) => {
+          if (!snapshot.empty) {
+            const list: Account[] = [];
+            snapshot.forEach(docSnap => {
+              list.push({ id: docSnap.id, ...docSnap.data() } as Account);
+            });
+            if (list.length > 0) {
+              setAccounts(list);
+            }
+          } else if (!seededRef.current.accounts) {
+            seededRef.current.accounts = true;
+            for (const item of INITIAL_ACCOUNTS) {
+              await setDoc(doc(db, 'accounts', item.id), sanitizeForFirestore(item)).catch(() => {});
+            }
           }
-        }
-      }, (err) => {
-        console.warn('Firestore onSnapshot notice:', err.message);
-        setFirestoreStatus('offline');
-      });
+        }, (err) => {
+          console.warn('Firestore accounts listener notice:', err.message);
+        })
+      );
+
+      // 3. Trading Rules
+      unsubs.push(
+        onSnapshot(collection(db, 'rules'), async (snapshot) => {
+          if (!snapshot.empty) {
+            const list: TradingRule[] = [];
+            snapshot.forEach(docSnap => {
+              list.push({ id: docSnap.id, ...docSnap.data() } as TradingRule);
+            });
+            setRules(list);
+          } else if (!seededRef.current.rules) {
+            seededRef.current.rules = true;
+            for (const item of INITIAL_RULES) {
+              await setDoc(doc(db, 'rules', item.id), sanitizeForFirestore(item)).catch(() => {});
+            }
+          }
+        }, (err) => {
+          console.warn('Firestore rules listener notice:', err.message);
+        })
+      );
+
+      // 4. Journal Entries
+      unsubs.push(
+        onSnapshot(collection(db, 'journal'), async (snapshot) => {
+          if (!snapshot.empty) {
+            const list: JournalEntry[] = [];
+            snapshot.forEach(docSnap => {
+              list.push({ id: docSnap.id, ...docSnap.data() } as JournalEntry);
+            });
+            list.sort((a, b) => b.date.localeCompare(a.date));
+            setJournalEntries(list);
+          } else if (!seededRef.current.journal) {
+            seededRef.current.journal = true;
+            for (const item of INITIAL_JOURNAL) {
+              await setDoc(doc(db, 'journal', item.id), sanitizeForFirestore(item)).catch(() => {});
+            }
+          }
+        }, (err) => {
+          console.warn('Firestore journal listener notice:', err.message);
+        })
+      );
+
+      // 5. Broker Instrument Specifications
+      unsubs.push(
+        onSnapshot(collection(db, 'instrumentSpecs'), async (snapshot) => {
+          if (!snapshot.empty) {
+            const map: Record<string, InstrumentSpec> = {};
+            snapshot.forEach(docSnap => {
+              const data = docSnap.data() as InstrumentSpec;
+              const key = (data.symbol || docSnap.id).toUpperCase().trim();
+              map[key] = { ...data, symbol: key };
+            });
+            setInstrumentSpecs(map);
+          } else if (!seededRef.current.specs) {
+            seededRef.current.specs = true;
+            for (const spec of Object.values(STARTER_INSTRUMENT_SPECS)) {
+              await setDoc(doc(db, 'instrumentSpecs', spec.symbol), sanitizeForFirestore(spec)).catch(() => {});
+            }
+          }
+        }, (err) => {
+          console.warn('Firestore instrumentSpecs listener notice:', err.message);
+        })
+      );
+
+      // 6. User-Configured Currency Conversion Rates
+      unsubs.push(
+        onSnapshot(doc(db, 'exchangeRates', 'rates'), (docSnap) => {
+          if (docSnap.exists()) {
+            const raw = docSnap.data() as Record<string, unknown>;
+            const cleanRates: ExchangeRateMap = {};
+            for (const [k, v] of Object.entries(raw)) {
+              if (typeof v === 'number' && v > 0) {
+                cleanRates[k] = v;
+              }
+            }
+            setExchangeRates(cleanRates);
+          }
+        }, (err) => {
+          console.warn('Firestore exchangeRates listener notice:', err.message);
+        })
+      );
     } catch (e) {
-      console.warn('Firestore connection failed:', e);
+      console.warn('Firestore setup warning:', e);
       setFirestoreStatus('offline');
     }
 
     return () => {
-      if (unsubscribe) unsubscribe();
+      unsubs.forEach(u => u());
     };
   }, []);
 
@@ -161,54 +365,107 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     ? trades
     : trades.filter(t => t.accountId === selectedAccountId);
 
-  const activeAccount = accounts.find(a => a.id === selectedAccountId);
+  const activeAccount = selectedAccountId === 'all'
+    ? undefined
+    : (accounts.find(a => a.id === selectedAccountId) || accounts[0]);
   const selectedTrade = trades.find(t => t.id === selectedTradeId);
 
-  // Account actions
-  const addAccount = async (data: { name: string; type: Account['type']; broker?: string; startingBalance: number; currency: Account['currency'] }) => {
+  // Account Actions
+  const addAccount = async (data: { name: string; type: Account['type']; broker?: string; startingBalance: number; currency: Account['currency'] }): Promise<Account> => {
+    if (!data.name.trim()) {
+      throw new Error('Please enter an account name.');
+    }
+    const cleanBalance = isNaN(data.startingBalance) ? 0 : Number(data.startingBalance.toFixed(2));
     const newAcc: Account = {
-      ...data,
       id: `acc-${Date.now()}`,
-      currentBalance: data.startingBalance,
+      name: data.name.trim(),
+      type: data.type,
+      broker: data.broker?.trim() || undefined,
+      startingBalance: cleanBalance,
+      currentBalance: cleanBalance,
+      currency: data.currency,
       createdAt: new Date().toISOString().split('T')[0]
     };
-    setAccounts(prev => [...prev, newAcc]);
-    setSelectedAccountId(newAcc.id);
 
     try {
-      await setDoc(doc(db, 'accounts', newAcc.id), sanitizeForFirestore(newAcc));
-    } catch (err) {
-      console.warn('Firestore setDoc accounts error:', err);
+      await withTimeout(setDoc(doc(db, 'accounts', newAcc.id), sanitizeForFirestore(newAcc)));
+    } catch (err: any) {
+      throw new Error(err?.message || 'Failed to save account to Firestore.');
     }
+
+    setAccounts(prev => {
+      if (prev.some(a => a.id === newAcc.id)) return prev;
+      return [...prev, newAcc];
+    });
+    setSelectedAccountId(newAcc.id);
+    return newAcc;
+  };
+
+  const updateAccount = async (
+    accountId: string,
+    updates: {
+      name?: string;
+      type?: Account['type'];
+      broker?: string;
+      currency?: Account['currency'];
+      currentBalance?: number;
+    }
+  ) => {
+    const target = accounts.find(a => a.id === accountId);
+    if (!target) {
+      throw new Error('Account not found.');
+    }
+
+    const cleanName = updates.name !== undefined ? updates.name.trim() : target.name;
+    if (!cleanName) {
+      throw new Error('Account name cannot be empty.');
+    }
+
+    const cleanBal =
+      updates.currentBalance !== undefined
+        ? Number(updates.currentBalance.toFixed(2))
+        : target.currentBalance;
+
+    const updatedAccount: Account = {
+      ...target,
+      name: cleanName,
+      type: updates.type ?? target.type,
+      broker: updates.broker !== undefined ? updates.broker.trim() || undefined : target.broker,
+      currency: updates.currency ?? target.currency,
+      currentBalance: cleanBal
+    };
+
+    try {
+      await withTimeout(setDoc(doc(db, 'accounts', accountId), sanitizeForFirestore(updatedAccount)));
+    } catch (err: any) {
+      throw new Error(err?.message || 'Failed to update account in Firestore.');
+    }
+
+    setAccounts(prev => prev.map(a => (a.id === accountId ? updatedAccount : a)));
   };
 
   const updateAccountBalance = async (accountId: string, newBalance: number) => {
-    const cleanBal = Number(newBalance.toFixed(2));
-    setAccounts(prev => prev.map(a => a.id === accountId ? { ...a, currentBalance: cleanBal } : a));
-
-    try {
-      await updateDoc(doc(db, 'accounts', accountId), { currentBalance: cleanBal });
-    } catch {
-      try {
-        const target = accounts.find(a => a.id === accountId);
-        if (target) {
-          await setDoc(doc(db, 'accounts', accountId), sanitizeForFirestore({ ...target, currentBalance: cleanBal }));
-        }
-      } catch (err) {
-        console.warn('Error updating account balance in Firestore:', err);
-      }
-    }
+    await updateAccount(accountId, { currentBalance: newBalance });
   };
 
-  /**
-   * ADD TRADE - Highest Priority Requirement
-   * Validates required data, persists to Firestore, and sets status to 'Open'.
-   * Throws on Firestore failure so the UI can report real errors.
-   */
+  const deleteAccount = async (accountId: string) => {
+    if (accounts.length <= 1) {
+      throw new Error('You must keep at least one trading account.');
+    }
+    await withTimeout(deleteDoc(doc(db, 'accounts', accountId)));
+    setAccounts(prev => {
+      const next = prev.filter(a => a.id !== accountId);
+      if (selectedAccountId === accountId && next.length > 0) {
+        setSelectedAccountId(next[0].id);
+      }
+      return next;
+    });
+  };
+
+  // Trade Actions
   const addTrade = async (tradeData: Omit<Trade, 'id' | 'status' | 'realizedPnl'> & { realizedPnl?: number; status?: 'Open' | 'Closed' }): Promise<Trade> => {
-    // 1. Rigorous Data Validation
     if (!tradeData.asset || !tradeData.asset.trim()) {
-      throw new Error('Please enter an instrument symbol (e.g. XAUUSD, XAGUSD, US30).');
+      throw new Error('Please enter an instrument symbol (e.g. XAUUSD, EURUSD, BTCUSD).');
     }
     if (!tradeData.entryPrice || isNaN(tradeData.entryPrice) || tradeData.entryPrice <= 0) {
       throw new Error('Please enter a valid entry price greater than 0.');
@@ -220,7 +477,6 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       throw new Error('Please select a trading account.');
     }
 
-    // 2. Build Trade Document with guaranteed OPEN status and 0 realized PnL
     const newTradeId = `t-${Date.now()}`;
     const newTrade: Trade = {
       ...tradeData,
@@ -232,62 +488,32 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       time: tradeData.time || new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
     };
 
-    // 3. Sanitize for Firestore to strip undefined fields
     const cleanPayload = sanitizeForFirestore(newTrade);
+    await withTimeout(setDoc(doc(db, 'trades', newTradeId), cleanPayload));
 
-    // 4. Save to Firestore first and await confirmation
-    try {
-      await setDoc(doc(db, 'trades', newTradeId), cleanPayload);
-    } catch (firestoreError: any) {
-      console.error('Firestore save failed:', firestoreError);
-      throw new Error(
-        firestoreError?.message || 'Failed to save trade to Firebase. Please check your connection and try again.'
-      );
-    }
-
-    // 5. Update local state and persistence
-    setTrades(prev => [newTrade, ...prev]);
-
+    setTrades(prev => {
+      if (prev.some(t => t.id === newTradeId)) return prev;
+      return [newTrade, ...prev];
+    });
     return newTrade;
   };
 
-  // Close Trade Action: Updates status to 'Closed', applies realized profit to account balance
   const closeTrade = async (
-    tradeId: string, 
+    tradeId: string,
     closeData: {
       outcome: CloseOutcome;
       exitPrice: number;
       realizedPnl: number;
+      grossRealizedPnl?: number;
+      commission?: number;
+      swap?: number;
       closedDate: string;
       closedAt: string;
       notes?: string;
     }
   ) => {
     const target = trades.find(t => t.id === tradeId);
-    if (!target) return;
-
-    // Only update balance if trade was previously Open
-    if (target.status === 'Open') {
-      const targetAccount = accounts.find(a => a.id === target.accountId);
-      const newBal = Number(((targetAccount?.currentBalance || 100000) + closeData.realizedPnl).toFixed(2));
-      
-      setAccounts(prev => prev.map(acc => {
-        if (acc.id === target.accountId) {
-          return {
-            ...acc,
-            currentBalance: newBal
-          };
-        }
-        return acc;
-      }));
-
-      // Persist account balance to Firestore
-      try {
-        await updateDoc(doc(db, 'accounts', target.accountId), { currentBalance: newBal });
-      } catch (err) {
-        console.warn('Account update in Firestore failed:', err);
-      }
-    }
+    if (!target) throw new Error('Trade not found.');
 
     const updated: Trade = {
       ...target,
@@ -295,26 +521,32 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       closeOutcome: closeData.outcome,
       exitPrice: closeData.exitPrice,
       realizedPnl: closeData.realizedPnl,
+      grossRealizedPnl: closeData.grossRealizedPnl,
+      commission: closeData.commission,
+      swap: closeData.swap,
       closedDate: closeData.closedDate,
       closedAt: closeData.closedAt,
-      notes: closeData.notes 
-        ? (target.notes ? `${target.notes}\n\n[Closed]: ${closeData.notes}` : closeData.notes) 
+      notes: closeData.notes
+        ? (target.notes ? `${target.notes}\n\n[Closed]: ${closeData.notes}` : closeData.notes)
         : target.notes
     };
 
+    await withTimeout(setDoc(doc(db, 'trades', tradeId), sanitizeForFirestore(updated)));
     setTrades(prev => prev.map(t => t.id === tradeId ? updated : t));
 
-    try {
-      await setDoc(doc(db, 'trades', tradeId), sanitizeForFirestore(updated));
-    } catch (e) {
-      console.warn('Firestore closeTrade error:', e);
+    if (target.status === 'Open') {
+      const targetAccount = accounts.find(a => a.id === target.accountId);
+      if (targetAccount) {
+        const newBal = Number((targetAccount.currentBalance + closeData.realizedPnl).toFixed(2));
+        await updateAccountBalance(targetAccount.id, newBal).catch(err => {
+          console.warn('Account balance update warning:', err);
+        });
+      }
     }
   };
 
-  // Update Trade: Handles edits to closed or open trades safely without double-counting
   const updateTrade = async (updated: Trade) => {
     const oldTrade = trades.find(t => t.id === updated.id);
-    
     let pnlDelta = 0;
     if (oldTrade) {
       if (oldTrade.status === 'Closed' && updated.status === 'Closed') {
@@ -326,99 +558,72 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     }
 
+    await withTimeout(setDoc(doc(db, 'trades', updated.id), sanitizeForFirestore(updated)));
     setTrades(prev => prev.map(t => t.id === updated.id ? updated : t));
 
     if (pnlDelta !== 0) {
-      setAccounts(prev => prev.map(acc => {
-        if (acc.id === updated.accountId) {
-          const updatedBal = Number((acc.currentBalance + pnlDelta).toFixed(2));
-          updateDoc(doc(db, 'accounts', acc.id), { currentBalance: updatedBal }).catch(() => {});
-          return {
-            ...acc,
-            currentBalance: updatedBal
-          };
-        }
-        return acc;
-      }));
-    }
-
-    try {
-      await setDoc(doc(db, 'trades', updated.id), sanitizeForFirestore(updated));
-    } catch (err) {
-      console.warn('Firestore update warning:', err);
+      const acc = accounts.find(a => a.id === updated.accountId);
+      if (acc) {
+        await updateAccountBalance(acc.id, Number((acc.currentBalance + pnlDelta).toFixed(2))).catch(() => {});
+      }
     }
   };
 
-  // Delete trade
   const deleteTrade = async (tradeId: string) => {
     const target = trades.find(t => t.id === tradeId);
+    await withTimeout(deleteDoc(doc(db, 'trades', tradeId)));
+
     if (target && target.status === 'Closed' && target.realizedPnl) {
-      setAccounts(prev => prev.map(acc => {
-        if (acc.id === target.accountId) {
-          const updatedBal = Number((acc.currentBalance - target.realizedPnl).toFixed(2));
-          updateDoc(doc(db, 'accounts', acc.id), { currentBalance: updatedBal }).catch(() => {});
-          return {
-            ...acc,
-            currentBalance: updatedBal
-          };
-        }
-        return acc;
-      }));
+      const acc = accounts.find(a => a.id === target.accountId);
+      if (acc) {
+        await updateAccountBalance(acc.id, Number((acc.currentBalance - target.realizedPnl).toFixed(2))).catch(() => {});
+      }
     }
 
     setTrades(prev => prev.filter(t => t.id !== tradeId));
     if (selectedTradeId === tradeId) setSelectedTradeId(null);
-
-    try {
-      await deleteDoc(doc(db, 'trades', tradeId));
-    } catch (err) {
-      console.warn('Firestore delete warning:', err);
-    }
   };
 
   // Journal management
   const addJournalEntry = async (entry: Omit<JournalEntry, 'id'>): Promise<JournalEntry> => {
+    if (!entry.title.trim()) {
+      throw new Error('Please enter a headline for your journal note.');
+    }
     const newEntry: JournalEntry = {
       ...entry,
       id: `j-${Date.now()}`
     };
-    setJournalEntries(prev => [newEntry, ...prev]);
 
-    try {
-      await setDoc(doc(db, 'journal', newEntry.id), sanitizeForFirestore(newEntry));
-    } catch (err) {
-      console.warn('Firestore journal entry save warning:', err);
-    }
+    await withTimeout(setDoc(doc(db, 'journal', newEntry.id), sanitizeForFirestore(newEntry)));
+    setJournalEntries(prev => {
+      if (prev.some(j => j.id === newEntry.id)) return prev;
+      return [newEntry, ...prev];
+    });
     return newEntry;
   };
 
   const deleteJournalEntry = async (id: string) => {
+    await withTimeout(deleteDoc(doc(db, 'journal', id)));
     setJournalEntries(prev => prev.filter(j => j.id !== id));
-    try {
-      await deleteDoc(doc(db, 'journal', id));
-    } catch (err) {
-      console.warn('Firestore journal delete warning:', err);
-    }
   };
 
   // Rules management
   const addRule = async (text: string): Promise<TradingRule> => {
     const cleanText = text.trim();
     if (!cleanText) {
-      throw new Error('Please enter a rule description.');
+      throw new Error('Please enter a trading rule.');
     }
     const newRule: TradingRule = {
       id: `r-${Date.now()}`,
       text: cleanText,
       isActive: true
     };
-    setRules(prev => [...prev, newRule]);
 
-    try {
-      await setDoc(doc(db, 'rules', newRule.id), sanitizeForFirestore(newRule));
-    } catch (err) {
-      console.warn('Firestore rule save warning:', err);
-    }
+    await withTimeout(setDoc(doc(db, 'rules', newRule.id), sanitizeForFirestore(newRule)));
+    setRules(prev => {
+      if (prev.some(r => r.id === newRule.id)) return prev;
+      return [...prev, newRule];
+    });
     return newRule;
   };
 
@@ -426,22 +631,76 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const target = rules.find(r => r.id === id);
     if (!target) return;
     const updated = { ...target, isActive: !target.isActive };
-    setRules(prev => prev.map(r => r.id === id ? updated : r));
 
-    try {
-      await setDoc(doc(db, 'rules', id), sanitizeForFirestore(updated));
-    } catch (err) {
-      console.warn('Firestore toggle rule warning:', err);
-    }
+    setRules(prev => prev.map(r => r.id === id ? updated : r));
+    await withTimeout(setDoc(doc(db, 'rules', id), sanitizeForFirestore(updated)));
   };
 
   const deleteRule = async (id: string) => {
+    await withTimeout(deleteDoc(doc(db, 'rules', id)));
     setRules(prev => prev.filter(r => r.id !== id));
-    try {
-      await deleteDoc(doc(db, 'rules', id));
-    } catch (err) {
-      console.warn('Firestore delete rule warning:', err);
+  };
+
+  // Instrument Specification Management (Persisted to Firestore)
+  const saveInstrumentSpec = async (spec: InstrumentSpec): Promise<InstrumentSpec> => {
+    const cleanSymbol = spec.symbol.toUpperCase().trim();
+    if (!cleanSymbol) {
+      throw new Error('Please enter an instrument symbol.');
     }
+    if (!spec.contractSize || spec.contractSize <= 0) {
+      throw new Error('Contract size must be greater than 0.');
+    }
+    if (!spec.tickSize || spec.tickSize <= 0) {
+      throw new Error('Tick size must be greater than 0.');
+    }
+    if (!spec.quoteCurrency || !spec.quoteCurrency.trim()) {
+      throw new Error('Quote currency is required.');
+    }
+
+    const normalized: InstrumentSpec = {
+      ...spec,
+      symbol: cleanSymbol,
+      quoteCurrency: spec.quoteCurrency.toUpperCase().trim(),
+      baseCurrency: spec.baseCurrency?.toUpperCase().trim() || undefined,
+      tickValueCurrency: spec.tickValueCurrency?.toUpperCase().trim() || undefined,
+      minLot: spec.minLot > 0 ? spec.minLot : 0.01,
+      maxLot: spec.maxLot > 0 ? spec.maxLot : 100,
+      lotStep: spec.lotStep > 0 ? spec.lotStep : 0.01,
+      isCustom: true,
+      updatedAt: new Date().toISOString()
+    };
+
+    await withTimeout(setDoc(doc(db, 'instrumentSpecs', cleanSymbol), sanitizeForFirestore(normalized)));
+    setInstrumentSpecs(prev => ({ ...prev, [cleanSymbol]: normalized }));
+    return normalized;
+  };
+
+  const deleteInstrumentSpec = async (symbol: string) => {
+    const cleanSymbol = symbol.toUpperCase().trim();
+    await withTimeout(deleteDoc(doc(db, 'instrumentSpecs', cleanSymbol)));
+    setInstrumentSpecs(prev => {
+      const next = { ...prev };
+      delete next[cleanSymbol];
+      return next;
+    });
+  };
+
+  // Exchange Rate Management (Persisted to Firestore)
+  const saveExchangeRate = async (pairKey: string, rate: number) => {
+    const cleanKey = pairKey.toUpperCase().trim();
+    if (!cleanKey || !rate || rate <= 0 || isNaN(rate)) {
+      throw new Error('Please enter a valid positive exchange rate.');
+    }
+    const nextRates = { ...exchangeRates, [cleanKey]: rate };
+    await withTimeout(setDoc(doc(db, 'exchangeRates', 'rates'), sanitizeForFirestore(nextRates)));
+    setExchangeRates(nextRates);
+  };
+
+  const deleteExchangeRate = async (pairKey: string) => {
+    const nextRates = { ...exchangeRates };
+    delete nextRates[pairKey];
+    await withTimeout(setDoc(doc(db, 'exchangeRates', 'rates'), sanitizeForFirestore(nextRates)));
+    setExchangeRates(nextRates);
   };
 
   return (
@@ -452,7 +711,9 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setSelectedAccountId,
         activeAccount,
         addAccount,
+        updateAccount,
         updateAccountBalance,
+        deleteAccount,
 
         trades,
         filteredTrades,
@@ -474,11 +735,28 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         toggleRule,
         deleteRule,
 
+        instrumentSpecs,
+        saveInstrumentSpec,
+        deleteInstrumentSpec,
+        exchangeRates,
+        saveExchangeRate,
+        deleteExchangeRate,
+        specModalSymbol,
+        setSpecModalSymbol,
+
         activeTab,
         setActiveTab,
 
         selectedCalendarDate,
         setSelectedCalendarDate,
+
+        isAccountModalOpen,
+        setIsAccountModalOpen,
+        isAddTradeModalOpen,
+        setIsAddTradeModalOpen,
+        journalViewMode,
+        setJournalViewMode,
+
         firestoreStatus
       }}
     >

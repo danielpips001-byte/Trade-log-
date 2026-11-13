@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTrading } from '../../context/TradingContext';
-import { X, Check, AlertCircle, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
+import { X, Check, AlertCircle, Loader2, AlertTriangle, Sliders } from 'lucide-react';
 import { Trade, CloseOutcome } from '../../types/trading';
-import { calculateTradeEstimates, getCurrencySymbol } from '../../utils/calculations';
+import { calculateRealizedTradePnl, getCurrencySymbol, formatMoney } from '../../utils/calculations';
 import { motion } from 'motion/react';
 
 interface Props {
@@ -12,290 +12,421 @@ interface Props {
 }
 
 export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSuccess }) => {
-  const { closeTrade, accounts } = useTrading();
+  const {
+    closeTrade,
+    accounts,
+    instrumentSpecs,
+    exchangeRates,
+    saveExchangeRate,
+    setSpecModalSymbol
+  } = useTrading();
   const account = accounts.find(a => a.id === trade.accountId);
-  const currencySymbol = getCurrencySymbol(account?.currency);
+  const accountCurrency = account?.currency || 'USD';
+  const currencySymbol = getCurrencySymbol(accountCurrency);
 
   const [outcome, setOutcome] = useState<CloseOutcome>('Take Profit Hit');
-  const [exitPrice, setExitPrice] = useState<string>(trade.takeProfit?.toString() || trade.entryPrice.toString());
-  const [realizedPnl, setRealizedPnl] = useState<string>('0');
+  const [exitPrice, setExitPrice] = useState<string>(
+    trade.takeProfit?.toString() || trade.entryPrice.toString()
+  );
+  const [commission, setCommission] = useState<string>('0');
+  const [swap, setSwap] = useState<string>('0');
+  const [manualNetPnl, setManualNetPnl] = useState<string | null>(null);
+
   const [closedDate, setClosedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [closedAt, setClosedAt] = useState<string>(
     new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
   );
-  const [closeNotes, setCloseNotes] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notes, setNotes] = useState<string>('');
+  const [quickRateInput, setQuickRateInput] = useState<string>('');
+  const [savingRate, setSavingRate] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const springModal = {
-    type: 'spring' as const,
-    stiffness: 380,
-    damping: 28
-  };
-
-  const springButton = {
-    type: 'spring' as const,
-    stiffness: 450,
-    damping: 25
-  };
-
-  // Auto-calculate P/L based on outcome selection
   useEffect(() => {
-    if (outcome === 'Take Profit Hit') {
-      const tp = trade.takeProfit || trade.entryPrice;
-      setExitPrice(tp.toString());
-      const calc = calculateTradeEstimates(trade.asset, trade.direction, trade.entryPrice, trade.stopLoss || 0, tp, trade.lotSize);
-      setRealizedPnl(calc?.estimatedProfit?.toString() || '0');
-    } else if (outcome === 'Stop Loss Hit') {
-      const sl = trade.stopLoss || trade.entryPrice;
-      setExitPrice(sl.toString());
-      const calc = calculateTradeEstimates(trade.asset, trade.direction, trade.entryPrice, sl, trade.takeProfit || 0, trade.lotSize);
-      setRealizedPnl(calc?.estimatedLoss ? (-calc.estimatedLoss).toString() : '0');
+    setManualNetPnl(null);
+    if (outcome === 'Take Profit Hit' && trade.takeProfit) {
+      setExitPrice(trade.takeProfit.toString());
+    } else if (outcome === 'Stop Loss Hit' && trade.stopLoss) {
+      setExitPrice(trade.stopLoss.toString());
     } else if (outcome === 'Breakeven') {
       setExitPrice(trade.entryPrice.toString());
-      setRealizedPnl('0.00');
     }
   }, [outcome, trade]);
 
-  // Recalculate when manual exit price changes
-  const handleExitPriceChange = (val: string) => {
-    setExitPrice(val);
-    const num = parseFloat(val);
-    if (!isNaN(num)) {
-      const calc = calculateTradeEstimates(
-        trade.asset, 
-        trade.direction, 
-        trade.entryPrice, 
-        trade.direction === 'BUY' ? (trade.entryPrice - 0.001) : (trade.entryPrice + 0.001), 
-        num, 
-        trade.lotSize
-      );
-      if (calc) {
-        const isProfit = trade.direction === 'BUY' ? (num >= trade.entryPrice) : (num <= trade.entryPrice);
-        const amount = isProfit ? calc.estimatedProfit : -calc.estimatedLoss;
-        setRealizedPnl(amount.toString());
-      }
+  const pnlCalc = useMemo(() => {
+    const exitNum = parseFloat(exitPrice) || 0;
+    const commNum = parseFloat(commission) || 0;
+    const swapNum = parseFloat(swap) || 0;
+
+    return calculateRealizedTradePnl({
+      symbol: trade.asset,
+      direction: trade.direction,
+      entryPrice: trade.entryPrice,
+      exitPrice: exitNum,
+      lotSize: trade.lotSize,
+      commission: commNum,
+      swap: swapNum,
+      accountCurrency,
+      specsMap: instrumentSpecs,
+      exchangeRates
+    });
+  }, [trade, exitPrice, commission, swap, accountCurrency, instrumentSpecs, exchangeRates]);
+
+  const effectiveNetPnlStr =
+    manualNetPnl !== null
+      ? manualNetPnl
+      : pnlCalc.status === 'ok'
+      ? pnlCalc.netPnl.toFixed(2)
+      : '0.00';
+
+  const pnlNum = parseFloat(effectiveNetPnlStr) || 0;
+
+  const handleSaveQuickRate = async () => {
+    if (!pnlCalc.missingConversion) return;
+    const val = parseFloat(quickRateInput);
+    if (isNaN(val) || val <= 0) {
+      setErrorMsg('Enter a valid positive exchange rate.');
+      return;
+    }
+    setSavingRate(true);
+    setErrorMsg(null);
+    try {
+      await saveExchangeRate(pnlCalc.missingConversion.suggestedKey, val);
+      setQuickRateInput('');
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Failed to save exchange rate.');
+    } finally {
+      setSavingRate(false);
     }
   };
 
-  const handleConfirmClose = async (e: React.FormEvent) => {
+  const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    const finalPnl = parseFloat(realizedPnl) || 0;
-    const finalExit = parseFloat(exitPrice) || trade.entryPrice;
+    setErrorMsg(null);
+    const exitNum = parseFloat(exitPrice);
+    const commNum = Math.abs(parseFloat(commission) || 0);
+    const swapNum = parseFloat(swap) || 0;
+    const netNum = parseFloat(effectiveNetPnlStr);
 
+    if (isNaN(exitNum) || exitNum <= 0) {
+      setErrorMsg('Please enter a valid exit price.');
+      return;
+    }
+    if (isNaN(netNum)) {
+      setErrorMsg('Please enter a valid realized P/L amount.');
+      return;
+    }
+
+    setIsClosing(true);
     try {
       await closeTrade(trade.id, {
         outcome,
-        exitPrice: finalExit,
-        realizedPnl: finalPnl,
+        exitPrice: exitNum,
+        realizedPnl: Number(netNum.toFixed(2)),
+        grossRealizedPnl: pnlCalc.status === 'ok' ? pnlCalc.grossPnl : Number((netNum + commNum - swapNum).toFixed(2)),
+        commission: Number(commNum.toFixed(2)),
+        swap: Number(swapNum.toFixed(2)),
         closedDate,
         closedAt,
-        notes: closeNotes || undefined
+        notes: notes.trim() || undefined
       });
-
       if (onClosedSuccess) onClosedSuccess();
       onClose();
-    } catch (err) {
-      console.error('Error closing trade:', err);
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Failed to close trade. Please check connection.');
     } finally {
-      setIsSubmitting(false);
+      setIsClosing(false);
     }
   };
 
-  const pnlNum = parseFloat(realizedPnl) || 0;
+  const missingPairParts = pnlCalc.missingConversion?.suggestedKey.split('_') || [];
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
-      onClick={onClose}
+      transition={{ duration: 0.18 }}
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+      onClick={() => !isClosing && onClose()}
     >
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.94, y: 16 }}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
-        transition={springModal}
-        className="bg-white/95 backdrop-blur-2xl border border-black/[0.08] rounded-3xl w-full max-w-md shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-6 my-auto space-y-4"
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        className="bg-[#262626] border border-white/[0.08] rounded-t-2xl sm:rounded-2xl w-full max-w-md shadow-2xl overflow-hidden max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-[#222222]">
           <div>
-            <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block font-mono">
-              SETTLE OPEN POSITION
+            <h3 className="text-base font-bold text-white">Close Trade</h3>
+            <span className="text-xs text-neutral-400 font-mono">
+              {trade.asset} · {trade.direction} · {trade.lotSize} Lots · Entry {trade.entryPrice}
             </span>
-            <h3 className="text-lg font-bold text-neutral-950 font-mono flex items-center gap-2 mt-0.5">
-              <span>{trade.asset}</span>
-              <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold ${
-                trade.direction === 'BUY' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-              }`}>
-                {trade.direction}
-              </span>
-              <span className="text-xs text-neutral-500 font-normal">({trade.lotSize} lots)</span>
-            </h3>
           </div>
-          <motion.button 
-            whileTap={{ scale: 0.88 }}
-            onClick={onClose} 
-            className="p-1.5 rounded-full bg-neutral-100 text-neutral-500 hover:text-neutral-950 transition-colors cursor-pointer"
+          <button
+            type="button"
+            disabled={isClosing}
+            onClick={onClose}
+            aria-label="Close modal"
+            className="p-2 rounded-lg text-neutral-400 hover:text-white cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
           >
-            <X className="w-4 h-4" />
-          </motion.button>
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        <form onSubmit={handleConfirmClose} className="space-y-4">
-          
-          {/* Closing Outcome Selector: iOS Pill Buttons */}
+        <form onSubmit={handleConfirm} className="p-5 overflow-y-auto space-y-4">
+          {errorMsg && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-medium">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {/* Outcome Pills */}
           <div>
-            <label className="block text-xs font-semibold text-neutral-700 mb-1.5 uppercase tracking-wider text-[11px]">
-              Closing Outcome *
-            </label>
+            <label className="block text-xs font-semibold text-neutral-300 mb-2">Outcome</label>
             <div className="grid grid-cols-2 gap-2">
-              {(['Take Profit Hit', 'Stop Loss Hit', 'Breakeven', 'Closed Manually'] as CloseOutcome[]).map(opt => (
-                <motion.button
+              {(['Take Profit Hit', 'Stop Loss Hit', 'Breakeven', 'Closed Manually'] as CloseOutcome[]).map(opt => {
+                const isSelected = outcome === opt;
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setOutcome(opt)}
+                    className={`px-3 py-2.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                      isSelected
+                        ? opt === 'Take Profit Hit'
+                          ? 'bg-[#2ECC71] text-neutral-950 border-[#2ECC71]'
+                          : opt === 'Stop Loss Hit'
+                          ? 'bg-[#EF4444] text-white border-[#EF4444]'
+                          : opt === 'Breakeven'
+                          ? 'bg-neutral-200 text-neutral-950 border-neutral-200'
+                          : 'bg-[#2196F3] text-white border-[#2196F3]'
+                        : 'bg-[#1C1C1C] text-neutral-300 border-white/10 hover:border-white/25'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Missing Spec or Conversion Prompts */}
+          {pnlCalc.status === 'missing_spec' && pnlCalc.missingSpecSymbol && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 space-y-2">
+              <div className="flex items-start gap-2 text-amber-200 text-xs">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+                <span>No specification saved for {pnlCalc.missingSpecSymbol}. Configure it for automatic P/L calculation, or enter realized P/L manually below.</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSpecModalSymbol(pnlCalc.missingSpecSymbol!)}
+                className="px-3 py-1.5 rounded-lg bg-[#2196F3] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>Configure {pnlCalc.missingSpecSymbol}</span>
+              </button>
+            </div>
+          )}
+
+          {pnlCalc.status === 'missing_conversion' && pnlCalc.missingConversion && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 space-y-2">
+              <div className="flex items-start gap-2 text-amber-200 text-xs">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+                <span>
+                  Rate required ({pnlCalc.missingConversion.from} → {pnlCalc.missingConversion.to}):
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-white shrink-0">
+                  1 {missingPairParts[0]} =
+                </span>
+                <input
+                  type="number"
+                  step="any"
+                  value={quickRateInput}
+                  onChange={(e) => setQuickRateInput(e.target.value)}
+                  placeholder="Rate"
+                  className="flex-1 bg-[#1C1C1C] border border-white/15 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white"
+                />
+                <span className="text-xs font-mono text-white shrink-0">{missingPairParts[1]}</span>
+                <button
                   type="button"
-                  key={opt}
-                  whileTap={{ scale: 0.95 }}
-                  transition={springButton}
-                  onClick={() => setOutcome(opt)}
-                  className={`px-3 py-2.5 rounded-2xl text-xs font-semibold transition-all text-center cursor-pointer ${
-                    outcome === opt
-                      ? opt === 'Take Profit Hit'
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : opt === 'Stop Loss Hit'
-                        ? 'bg-rose-600 text-white shadow-sm'
-                        : 'bg-neutral-950 text-white shadow-sm'
-                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200/80 border border-neutral-200/60'
-                  }`}
+                  disabled={savingRate}
+                  onClick={handleSaveQuickRate}
+                  className="px-3 py-1.5 rounded-lg bg-[#2196F3] text-white text-xs font-bold cursor-pointer"
                 >
-                  {opt}
-                </motion.button>
-              ))}
+                  {savingRate ? '...' : 'Save'}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Realized Profit/Loss Banner */}
-          <div className={`p-4 rounded-2xl border text-center transition-all ${
-            pnlNum > 0
-              ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
-              : pnlNum < 0
-              ? 'bg-rose-50/70 border-rose-200 text-rose-950'
-              : 'bg-neutral-50 border-neutral-200 text-neutral-950'
-          }`}>
-            <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider block mb-0.5">
-              Settled Return to Balance
-            </span>
-            <div className={`text-3xl font-bold font-mono tabular-nums ${
-              pnlNum > 0 ? 'text-emerald-700' : pnlNum < 0 ? 'text-rose-700' : 'text-neutral-900'
-            }`}>
-              {pnlNum >= 0 ? '+' : ''}{currencySymbol}{Math.abs(pnlNum).toFixed(2)}
-            </div>
-            <p className="text-[11px] text-neutral-500 font-medium mt-1">
-              Will be applied to {account?.name || 'Trading Account'} balance
-            </p>
-          </div>
-
-          {/* Exit Price & Manual Realized P/L */}
+          {/* Exit Price & Net Realized P/L */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-neutral-700 mb-1">
-                EXIT PRICE
-              </label>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1.5">Exit Price</label>
               <input
                 type="number"
                 step="any"
                 value={exitPrice}
-                onChange={(e) => handleExitPriceChange(e.target.value)}
+                onChange={(e) => {
+                  setExitPrice(e.target.value);
+                  setManualNetPnl(null);
+                }}
                 required
-                className="w-full bg-[#F8F9FA] border border-neutral-200 rounded-2xl px-3.5 py-2.5 text-xs font-mono font-bold text-neutral-950 tabular-nums focus:outline-none focus:border-black"
+                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3.5 py-2.5 text-sm font-mono font-bold text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-neutral-700 mb-1">
-                EXACT P/L ($)
+              <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                Net Realized P/L ({currencySymbol})
               </label>
               <input
                 type="number"
                 step="any"
-                value={realizedPnl}
-                onChange={(e) => setRealizedPnl(e.target.value)}
+                value={effectiveNetPnlStr}
+                onChange={(e) => setManualNetPnl(e.target.value)}
                 required
-                className="w-full bg-[#F8F9FA] border border-neutral-200 rounded-2xl px-3.5 py-2.5 text-xs font-mono font-bold text-neutral-950 tabular-nums focus:outline-none focus:border-black"
+                className={`w-full bg-[#1C1C1C] border rounded-lg px-3.5 py-2.5 text-sm font-mono font-bold tabular-nums focus:outline-none ${
+                  pnlNum > 0
+                    ? 'border-[#2ECC71]/60 text-[#2ECC71]'
+                    : pnlNum < 0
+                    ? 'border-[#EF4444]/60 text-[#EF4444]'
+                    : 'border-white/10 text-white'
+                }`}
               />
             </div>
           </div>
 
-          {/* Date & Time */}
+          {/* Commission & Swap */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-neutral-700 mb-1">
-                CLOSING DATE
+              <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                Commission Fee ({currencySymbol})
               </label>
+              <input
+                type="number"
+                step="any"
+                min="0"
+                value={commission}
+                onChange={(e) => {
+                  setCommission(e.target.value);
+                  setManualNetPnl(null);
+                }}
+                placeholder="0.00"
+                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
+                Swap (+/- {currencySymbol})
+              </label>
+              <input
+                type="number"
+                step="any"
+                value={swap}
+                onChange={(e) => {
+                  setSwap(e.target.value);
+                  setManualNetPnl(null);
+                }}
+                placeholder="0.00"
+                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
+              />
+            </div>
+          </div>
+
+          {/* Breakdown Preview */}
+          {pnlCalc.status === 'ok' && (
+            <div className="bg-[#1C1C1C] border border-white/[0.06] rounded-lg px-3 py-2.5 space-y-1 text-[11px] font-mono">
+              <div className="flex justify-between text-neutral-400">
+                <span>Gross Price P/L</span>
+                <span className={pnlCalc.grossPnl >= 0 ? 'text-[#2ECC71]' : 'text-[#EF4444]'}>
+                  {formatMoney(pnlCalc.grossPnl, accountCurrency, true)}
+                </span>
+              </div>
+              <div className="flex justify-between text-neutral-400">
+                <span>Commission</span>
+                <span className="text-red-300">-{formatMoney(pnlCalc.commissionFee, accountCurrency)}</span>
+              </div>
+              <div className="flex justify-between text-neutral-400">
+                <span>Swap</span>
+                <span className={pnlCalc.swapAmount >= 0 ? 'text-emerald-300' : 'text-red-300'}>
+                  {formatMoney(pnlCalc.swapAmount, accountCurrency, true)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Closed Date & Time */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1.5">Closed Date</label>
               <input
                 type="date"
                 value={closedDate}
                 onChange={(e) => setClosedDate(e.target.value)}
                 required
-                className="w-full bg-[#F8F9FA] border border-neutral-200 rounded-2xl px-3 py-2 text-xs font-mono text-neutral-950"
+                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#2196F3]"
               />
             </div>
-
             <div>
-              <label className="block text-[11px] font-semibold text-neutral-700 mb-1">
-                CLOSING TIME
-              </label>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1.5">Closed Time</label>
               <input
                 type="time"
                 value={closedAt}
                 onChange={(e) => setClosedAt(e.target.value)}
-                required
-                className="w-full bg-[#F8F9FA] border border-neutral-200 rounded-2xl px-3 py-2 text-xs font-mono text-neutral-950"
+                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#2196F3]"
               />
             </div>
           </div>
 
-          {/* Exit Notes */}
+          {/* Closing Note */}
           <div>
-            <label className="block text-[11px] font-semibold text-neutral-700 mb-1">
-              CLOSING REFLECTION / NOTES (OPTIONAL)
-            </label>
+            <label className="block text-xs font-semibold text-neutral-300 mb-1.5">Closing Note (Optional)</label>
             <textarea
-              value={closeNotes}
-              onChange={(e) => setCloseNotes(e.target.value)}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              placeholder="e.g. Target reached smoothly or closed before CPI news..."
-              className="w-full bg-[#F8F9FA] border border-neutral-200 rounded-2xl px-3.5 py-2 text-xs text-neutral-950 resize-none focus:outline-none focus:border-black"
+              placeholder="Reflections on exit timing..."
+              className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3.5 py-2 text-xs text-white placeholder-neutral-500 resize-none focus:outline-none focus:border-[#2196F3]"
             />
           </div>
 
-          {/* Actions with Spring Press */}
-          <div className="pt-2 flex items-center justify-end gap-2.5">
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.94 }}
-              transition={springButton}
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-4 py-2.5 rounded-full bg-neutral-100 text-xs font-semibold text-neutral-700 hover:bg-neutral-200 transition-colors cursor-pointer"
+          {/* Account Balance Settlement Preview */}
+          <div className="bg-[#1C1C1C] border border-white/[0.08] rounded-lg p-3 flex items-center justify-between text-xs">
+            <span className="text-neutral-400">Net Account Settlement</span>
+            <span
+              className={`font-mono font-bold tabular-nums ${
+                pnlNum > 0 ? 'text-[#2ECC71]' : pnlNum < 0 ? 'text-[#EF4444]' : 'text-neutral-300'
+              }`}
             >
-              Cancel
-            </motion.button>
-            <motion.button
-              type="submit"
-              whileTap={{ scale: 0.96 }}
-              whileHover={{ scale: 1.02 }}
-              transition={springButton}
-              disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-full bg-neutral-950 hover:bg-neutral-800 text-white font-semibold text-xs shadow-md shadow-neutral-950/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-            >
-              {isSubmitting ? 'Settling...' : 'Confirm & Settle Trade'}
-            </motion.button>
+              {formatMoney(pnlNum, accountCurrency, true)}
+            </span>
           </div>
 
+          <div className="pt-2 flex justify-end gap-2.5">
+            <button
+              type="button"
+              disabled={isClosing}
+              onClick={onClose}
+              className="px-4 py-2.5 rounded-lg bg-[#333333] hover:bg-[#404040] text-neutral-200 text-xs font-semibold cursor-pointer min-h-[44px]"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isClosing}
+              className="px-5 py-2.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold flex items-center gap-2 cursor-pointer min-h-[44px]"
+            >
+              {isClosing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              <span>Confirm Close</span>
+            </button>
+          </div>
         </form>
       </motion.div>
     </motion.div>

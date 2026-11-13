@@ -13,6 +13,12 @@ service cloud.firestore {
     match /journal/{entryId} {
       allow read, write: if true;
     }
+    match /instrumentSpecs/{symbolId} {
+      allow read, write: if true;
+    }
+    match /exchangeRates/{rateDocId} {
+      allow read, write: if true;
+    }
     match /{document=**} {
       allow read, write: if false;
     }

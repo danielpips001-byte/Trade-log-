@@ -37,7 +37,7 @@
         "broker": { "type": "string" },
         "startingBalance": { "type": "number" },
         "currentBalance": { "type": "number" },
-        "currency": { "type": "string", "enum": ["USD", "EUR", "GBP", "AUD", "JPY"] },
+        "currency": { "type": "string", "enum": ["USD", "NGN", "EUR", "GBP", "AUD", "JPY"] },
         "createdAt": { "type": "string" }
       },
       "required": ["id", "name", "type", "startingBalance", "currentBalance", "currency"]
@@ -51,6 +51,14 @@
     "/accounts/{accountId}": {
       "schema": "Account",
       "description": "Collection of trading accounts"
+    },
+    "/instrumentSpecs/{symbolId}": {
+      "schema": "InstrumentSpec",
+      "description": "Broker instrument contract and tick specifications"
+    },
+    "/exchangeRates/{rateDocId}": {
+      "schema": "ExchangeRateMap",
+      "description": "User-configured currency exchange rates"
     }
   }
 }

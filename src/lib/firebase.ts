@@ -1,7 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { 
   initializeFirestore, 
-  getFirestore, 
   doc, 
   getDocFromServer,
   Firestore 
@@ -11,10 +10,14 @@ import firebaseConfig from '../../firebase-applet-config.json';
 // Initialize Firebase App
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore with ignoreUndefinedProperties to prevent undefined field crashes
+// Initialize Firestore with ignoreUndefinedProperties & auto-detect long polling
+// for reliable connections in sandboxed iframes and mobile networks
 export const db: Firestore = initializeFirestore(
   app, 
-  { ignoreUndefinedProperties: true }, 
+  { 
+    ignoreUndefinedProperties: true,
+    experimentalAutoDetectLongPolling: true
+  }, 
   firebaseConfig.firestoreDatabaseId
 );
 
@@ -38,7 +41,7 @@ export async function testConnection(): Promise<boolean> {
     return true;
   } catch (error) {
     if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn('Firebase client offline. Operating with local fallback.');
+      console.warn('Firebase client offline. Operating with local cache.');
       return false;
     }
     return true;

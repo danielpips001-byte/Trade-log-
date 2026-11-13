@@ -1,69 +1,71 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TradingProvider, useTrading } from './context/TradingContext';
 import { Header } from './components/layout/Header';
 import { BottomNav } from './components/layout/BottomNav';
-import { CalendarView } from './components/calendar/CalendarView';
-import { TradeHistoryView } from './components/trades/TradeHistoryView';
-import { AddTradeView } from './components/addTrade/AddTradeView';
-import { JournalView } from './components/journal/JournalView';
-import { AccountsView } from './components/accounts/AccountsView';
-import { TradeDetailPage } from './components/trades/TradeDetailPage';
+import { MyJournalView } from './components/journal/MyJournalView';
+import { PerformanceView } from './components/performance/PerformanceView';
+import { ToolsView } from './components/tools/ToolsView';
+import { AccountsModal } from './components/accounts/AccountsModal';
+import { AddTradeModal } from './components/trades/AddTradeModal';
+import { TradeDetailModal } from './components/trades/TradeDetailModal';
+import { InstrumentSpecModal } from './components/specs/InstrumentSpecModal';
+import { CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const AppContent: React.FC = () => {
-  const { activeTab, selectedTradeId, setSelectedTradeId } = useTrading();
+  const { activeTab } = useTrading();
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  // Subtle spring configuration matching iOS 26 physics
-  const springTransition = {
-    type: 'spring' as const,
-    stiffness: 380,
-    damping: 30,
-    mass: 0.8
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3200);
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F7F9] text-neutral-900 flex flex-col font-sans selection:bg-neutral-900 selection:text-white overflow-x-hidden">
-      
-      {/* Top Brand & Liquid Glass Account Switcher */}
+    <div className="min-h-screen bg-[#3D3D3D] text-white flex flex-col font-sans selection:bg-[#2196F3] selection:text-white overflow-x-hidden">
+      {/* Top Bar */}
       <Header />
 
-      {/* Main Viewport Content with subtle spring transitions */}
-      <main className="flex-1 pb-28">
+      {/* Global Confirmation Toast */}
+      <AnimatePresence>
+        {toastMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[#222222] border border-[#2ECC71]/40 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-semibold whitespace-nowrap"
+          >
+            <CheckCircle2 className="w-4 h-4 text-[#2ECC71] shrink-0" />
+            <span>{toastMsg}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content */}
+      <main className="flex-1">
         <AnimatePresence mode="wait">
-          {selectedTradeId ? (
-            <motion.div
-              key={`detail-${selectedTradeId}`}
-              initial={{ opacity: 0, y: 10, scale: 0.99 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.99 }}
-              transition={springTransition}
-            >
-              <TradeDetailPage 
-                tradeId={selectedTradeId} 
-                onBack={() => setSelectedTradeId(null)} 
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 8, scale: 0.995 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.995 }}
-              transition={springTransition}
-            >
-              {activeTab === 'calendar' && <CalendarView />}
-              {activeTab === 'trades' && <TradeHistoryView />}
-              {activeTab === 'add' && <AddTradeView />}
-              {activeTab === 'journal' && <JournalView />}
-              {activeTab === 'accounts' && <AccountsView />}
-            </motion.div>
-          )}
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {activeTab === 'tools' && <ToolsView />}
+            {activeTab === 'journal' && <MyJournalView />}
+            {activeTab === 'performance' && <PerformanceView />}
+          </motion.div>
         </AnimatePresence>
       </main>
 
-      {/* Floating 5-Item Bottom Navigation with Prominent Center Add Button */}
+      {/* Fixed 3-Tab Bottom Navigation */}
       <BottomNav />
 
+      {/* Global Modals */}
+      <AccountsModal />
+      <AddTradeModal onSavedSuccess={showToast} />
+      <TradeDetailModal />
+      <InstrumentSpecModal />
     </div>
   );
 };

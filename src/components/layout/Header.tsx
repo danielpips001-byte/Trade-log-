@@ -1,81 +1,90 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTrading } from '../../context/TradingContext';
-import { ChevronDown, Check, TrendingUp } from 'lucide-react';
-import { getCurrencySymbol } from '../../utils/calculations';
+import { Calendar, List, CircleUserRound } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export const Header: React.FC = () => {
-  const { accounts, selectedAccountId, setSelectedAccountId, activeAccount, setActiveTab, firestoreStatus } = useTrading();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const {
+    selectedAccountId,
+    activeAccount,
+    activeTab,
+    setActiveTab,
+    journalViewMode,
+    setJournalViewMode,
+    setIsAccountModalOpen,
+    setSelectedTradeId
+  } = useTrading();
 
-  const displayCurrency = getCurrencySymbol(activeAccount?.currency);
+  const handleToggleCalendar = () => {
+    setSelectedTradeId(null);
+    if (activeTab !== 'journal') {
+      setActiveTab('journal');
+      setJournalViewMode('calendar');
+    } else {
+      setJournalViewMode(journalViewMode === 'weekly' ? 'calendar' : 'weekly');
+    }
+  };
 
   return (
-    <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-black/[0.05] px-4 py-3 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.03)]">
-      <div className="max-w-2xl mx-auto flex items-center justify-between">
-        
-        {/* Brand */}
-        <button 
-          onClick={() => setActiveTab('calendar')}
-          className="text-left font-bold text-lg tracking-tight text-neutral-900 flex items-center gap-2 cursor-pointer group"
+    <header className="sticky top-0 z-30 bg-[#222222] border-b border-white/[0.07] px-2 h-14 flex items-center justify-between pt-safe">
+      <div className="max-w-4xl w-full mx-auto flex items-center justify-between">
+        {/* Left Action: Calendar / Weekly Toggle (matches top-left calendar icon in reference) */}
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.9 }}
+          onClick={handleToggleCalendar}
+          aria-label={journalViewMode === 'calendar' ? 'Switch to weekly journal view' : 'Open monthly calendar view'}
+          title={journalViewMode === 'calendar' ? 'Weekly List' : 'Monthly Calendar'}
+          className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
+            activeTab === 'journal' && journalViewMode === 'calendar'
+              ? 'text-[#2196F3]'
+              : 'text-white/90 hover:text-white'
+          }`}
         >
-          <div className="w-7 h-7 rounded-full bg-neutral-950 flex items-center justify-center text-white shadow-sm">
-            <TrendingUp className="w-3.5 h-3.5" />
-          </div>
-          <span className="font-extrabold text-neutral-950">Trade<span className="text-neutral-500 font-semibold">Log</span></span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title={`Cloud: ${firestoreStatus}`} />
-        </button>
-
-        {/* Minimal Liquid Glass Account Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white/90 border border-neutral-200/90 shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-xs hover:border-neutral-400 transition-all cursor-pointer"
-          >
-            <div className="text-right">
-              <span className="font-semibold text-neutral-900 block max-w-[120px] truncate text-xs">
-                {selectedAccountId === 'all' ? 'All Accounts' : activeAccount?.name}
-              </span>
-              <span className="text-[11px] font-mono text-emerald-700 font-bold tabular-nums">
-                {displayCurrency}{(activeAccount?.currentBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-neutral-500" />
-          </button>
-
-          {dropdownOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
-              <div className="absolute right-0 mt-2 w-60 rounded-3xl bg-white/95 backdrop-blur-2xl border border-black/[0.08] shadow-[0_12px_40px_rgba(0,0,0,0.12)] z-50 p-2 text-xs animate-in fade-in zoom-in-95">
-                <div className="px-3 py-2 text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
-                  Switch Trading Account
-                </div>
-                {accounts.map(acc => (
-                  <button
-                    key={acc.id}
-                    onClick={() => {
-                      setSelectedAccountId(acc.id);
-                      setDropdownOpen(false);
-                    }}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl transition-all cursor-pointer ${
-                      selectedAccountId === acc.id 
-                        ? 'bg-neutral-900 text-white font-medium shadow-sm' 
-                        : 'text-neutral-700 hover:bg-neutral-100'
-                    }`}
-                  >
-                    <div className="text-left">
-                      <p className="font-semibold truncate max-w-[140px]">{acc.name}</p>
-                      <p className={`text-[10px] font-mono ${selectedAccountId === acc.id ? 'text-neutral-300' : 'text-neutral-500'}`}>
-                        {acc.type} · ${acc.currentBalance.toLocaleString()}
-                      </p>
-                    </div>
-                    {selectedAccountId === acc.id && <Check className="w-4 h-4 text-white shrink-0 stroke-[2.5]" />}
-                  </button>
-                ))}
-              </div>
-            </>
+          {activeTab === 'journal' && journalViewMode === 'calendar' ? (
+            <List className="w-5 h-5" />
+          ) : (
+            <Calendar className="w-5 h-5" />
           )}
-        </div>
+        </motion.button>
 
+        {/* Center Active Account Lockup (exact 2-line hierarchy from reference) */}
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.96 }}
+          onClick={() => setIsAccountModalOpen(true)}
+          className="flex flex-col items-center justify-center px-3 py-1 rounded-lg hover:bg-white/[0.05] transition-colors cursor-pointer min-h-[44px]"
+        >
+          <span className="text-[11px] font-medium text-neutral-300 leading-tight whitespace-nowrap">
+            Active account:
+          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[16px] font-bold text-white leading-tight truncate max-w-[160px]">
+              {selectedAccountId === 'all' ? 'All Accounts' : (activeAccount?.name || 'Select Account')}
+            </span>
+            {selectedAccountId === 'all' ? (
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#2196F3]/20 text-[#2196F3]">
+                ALL
+              </span>
+            ) : activeAccount ? (
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-white/10 text-neutral-200">
+                {activeAccount.currency}
+              </span>
+            ) : null}
+          </div>
+        </motion.button>
+
+        {/* Right Action: Account Manager Icon (matches top-right user icon in reference) */}
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setIsAccountModalOpen(true)}
+          aria-label="Manage trading accounts"
+          title="Trading Accounts"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/90 hover:text-white transition-colors cursor-pointer"
+        >
+          <CircleUserRound className="w-6 h-6" />
+        </motion.button>
       </div>
     </header>
   );
