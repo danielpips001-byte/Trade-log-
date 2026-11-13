@@ -264,14 +264,16 @@ export const ToolsView: React.FC = () => {
   );
 
   return (
-    <div className="max-w-4xl mx-auto px-3.5 py-4 pb-24 space-y-3.5">
+    <div className="max-w-4xl mx-auto px-3.5 py-4 pb-28 space-y-3.5">
       {/* Segmented Tool Selector */}
-      <div className="bg-[#262626] p-1 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-1 border border-white/[0.04] shadow-md">
+      <div className="liquid-glass-surface p-1.5 rounded-3xl sm:rounded-full grid grid-cols-2 sm:grid-cols-4 gap-1">
         <button
           type="button"
           onClick={() => setSection('rules')}
-          className={`py-2.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[40px] ${
-            section === 'rules' ? 'bg-[#2196F3] text-white' : 'text-neutral-300 hover:text-white'
+          className={`py-2.5 px-3 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[40px] ${
+            section === 'rules'
+              ? 'liquid-glass-primary'
+              : 'text-neutral-300 hover:text-white hover:bg-white/[0.06]'
           }`}
         >
           <Shield className="w-3.5 h-3.5" />
@@ -281,8 +283,10 @@ export const ToolsView: React.FC = () => {
         <button
           type="button"
           onClick={() => setSection('notes')}
-          className={`py-2.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[40px] ${
-            section === 'notes' ? 'bg-[#2196F3] text-white' : 'text-neutral-300 hover:text-white'
+          className={`py-2.5 px-3 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[40px] ${
+            section === 'notes'
+              ? 'liquid-glass-primary'
+              : 'text-neutral-300 hover:text-white hover:bg-white/[0.06]'
           }`}
         >
           <BookOpen className="w-3.5 h-3.5" />
@@ -292,8 +296,10 @@ export const ToolsView: React.FC = () => {
         <button
           type="button"
           onClick={() => setSection('calculator')}
-          className={`py-2.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[40px] ${
-            section === 'calculator' ? 'bg-[#2196F3] text-white' : 'text-neutral-300 hover:text-white'
+          className={`py-2.5 px-3 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[40px] ${
+            section === 'calculator'
+              ? 'liquid-glass-primary'
+              : 'text-neutral-300 hover:text-white hover:bg-white/[0.06]'
           }`}
         >
           <Calculator className="w-3.5 h-3.5" />
@@ -303,8 +309,10 @@ export const ToolsView: React.FC = () => {
         <button
           type="button"
           onClick={() => setSection('specs')}
-          className={`py-2.5 px-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[40px] ${
-            section === 'specs' ? 'bg-[#2196F3] text-white' : 'text-neutral-300 hover:text-white'
+          className={`py-2.5 px-3 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[40px] ${
+            section === 'specs'
+              ? 'liquid-glass-primary'
+              : 'text-neutral-300 hover:text-white hover:bg-white/[0.06]'
           }`}
         >
           <Sliders className="w-3.5 h-3.5" />
@@ -315,7 +323,7 @@ export const ToolsView: React.FC = () => {
       {/* SECTION 1: TRADING RULES */}
       {section === 'rules' && (
         <div className="space-y-3">
-          <div className="bg-[#262626] rounded-xl p-4 border border-white/[0.04] shadow-md space-y-3.5">
+          <div className="liquid-glass-card rounded-3xl p-4 sm:p-5 space-y-3.5">
             <div>
               <h2 className="text-sm font-bold text-white">Trading Rules &amp; Discipline</h2>
               <p className="text-xs text-neutral-400 mt-0.5">
@@ -324,7 +332,7 @@ export const ToolsView: React.FC = () => {
             </div>
 
             {ruleError && (
-              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs">
+              <div className="flex items-center gap-2 p-2.5 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-200 text-xs">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{ruleError}</span>
               </div>
@@ -347,12 +355,12 @@ export const ToolsView: React.FC = () => {
                   if (ruleError) setRuleError(null);
                 }}
                 placeholder="Write a new trading rule..."
-                className="flex-1 bg-[#1C1C1C] border border-white/10 rounded-lg px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-[#2196F3]"
+                className="flex-1 liquid-glass-input rounded-full px-4 py-2.5 text-xs text-white placeholder-neutral-500"
               />
               <button
                 type="submit"
                 disabled={ruleBusy}
-                className="px-4 py-2.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] disabled:opacity-60 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[42px]"
+                className="px-4 py-2.5 rounded-full liquid-glass-primary disabled:opacity-60 text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[42px]"
               >
                 {ruleBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 <span>Add Rule</span>
@@ -367,9 +375,9 @@ export const ToolsView: React.FC = () => {
                   type="button"
                   disabled={ruleBusy}
                   onClick={() => handleAddRule(preset)}
-                  className="text-[11px] bg-[#1C1C1C] hover:bg-[#333333] border border-white/[0.06] text-neutral-300 px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer transition-colors"
+                  className="text-[11px] liquid-glass-pill text-neutral-200 px-3 py-1.5 rounded-full flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
-                  <Plus className="w-3 h-3 text-[#2196F3]" />
+                  <Plus className="w-3 h-3 text-white" />
                   <span>{preset}</span>
                 </button>
               ))}
@@ -382,7 +390,7 @@ export const ToolsView: React.FC = () => {
               rules.map((rule) => (
                 <div
                   key={rule.id}
-                  className="bg-[#262626] rounded-xl px-4 py-3.5 border border-white/[0.04] shadow-sm flex items-center justify-between gap-3"
+                  className="liquid-glass-card rounded-2xl px-4 py-3.5 flex items-center justify-between gap-3"
                 >
                   <button
                     type="button"
@@ -390,10 +398,10 @@ export const ToolsView: React.FC = () => {
                     className="flex items-center gap-3 flex-1 text-left cursor-pointer min-h-[36px]"
                   >
                     <div
-                      className={`w-5 h-5 rounded-md flex items-center justify-center border transition-colors shrink-0 ${
+                      className={`w-5 h-5 rounded-full flex items-center justify-center border transition-colors shrink-0 ${
                         rule.isActive
-                          ? 'bg-[#2196F3] border-[#2196F3] text-white'
-                          : 'border-neutral-500 bg-transparent'
+                          ? 'bg-white border-white text-[#0b0c0e]'
+                          : 'border-white/30 bg-white/[0.04]'
                       }`}
                     >
                       {rule.isActive && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -411,14 +419,14 @@ export const ToolsView: React.FC = () => {
                     type="button"
                     onClick={() => deleteRule(rule.id)}
                     aria-label="Delete rule"
-                    className="p-2 text-neutral-500 hover:text-[#EF4444] transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                    className="p-2 rounded-full text-neutral-500 hover:text-[#F87171] hover:bg-white/[0.06] transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               ))
             ) : (
-              <div className="bg-[#262626] rounded-xl p-6 text-center text-xs text-neutral-400 border border-white/[0.04]">
+              <div className="liquid-glass-card rounded-2xl p-6 text-center text-xs text-neutral-400">
                 No trading rules yet. Add one above to stay disciplined.
               </div>
             )}
@@ -429,7 +437,7 @@ export const ToolsView: React.FC = () => {
       {/* SECTION 2: JOURNAL REFLECTIONS */}
       {section === 'notes' && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between bg-[#262626] rounded-xl px-4 py-3.5 border border-white/[0.04]">
+          <div className="flex items-center justify-between liquid-glass-card rounded-3xl px-4 py-3.5">
             <div>
               <h2 className="text-sm font-bold text-white">Daily Reflections</h2>
               <span className="text-[11px] text-neutral-400">Market analysis, emotions &amp; lessons</span>
@@ -437,7 +445,7 @@ export const ToolsView: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsNoteModalOpen(true)}
-              className="px-3.5 py-2 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[38px]"
+              className="px-4 py-2 rounded-full liquid-glass-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[38px]"
             >
               <Plus className="w-4 h-4" />
               <span>New Note</span>
@@ -448,7 +456,7 @@ export const ToolsView: React.FC = () => {
             journalEntries.map((entry) => (
               <div
                 key={entry.id}
-                className="bg-[#262626] rounded-xl p-4 border border-white/[0.04] shadow-sm space-y-2.5"
+                className="liquid-glass-card rounded-2xl p-4 space-y-2.5"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -459,7 +467,7 @@ export const ToolsView: React.FC = () => {
                     type="button"
                     onClick={() => deleteJournalEntry(entry.id)}
                     aria-label="Delete reflection"
-                    className="p-2 text-neutral-500 hover:text-[#EF4444] cursor-pointer"
+                    className="p-2 rounded-full text-neutral-500 hover:text-[#F87171] hover:bg-white/[0.06] cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -470,16 +478,16 @@ export const ToolsView: React.FC = () => {
                 )}
 
                 {(entry.emotions || entry.lessons) && (
-                  <div className="pt-2 border-t border-white/[0.06] space-y-1 text-[11px]">
+                  <div className="pt-2 border-t border-white/[0.08] space-y-1 text-[11px]">
                     {entry.emotions && (
                       <div className="text-neutral-300">
-                        <span className="text-neutral-500 font-semibold">Emotions: </span>
+                        <span className="text-neutral-400 font-semibold">Emotions: </span>
                         {entry.emotions}
                       </div>
                     )}
                     {entry.lessons && (
-                      <div className="text-[#2ECC71]">
-                        <span className="text-emerald-400/70 font-semibold">Lesson: </span>
+                      <div className="text-[#34D399]">
+                        <span className="text-emerald-400/80 font-semibold">Lesson: </span>
                         {entry.lessons}
                       </div>
                     )}
@@ -488,7 +496,7 @@ export const ToolsView: React.FC = () => {
               </div>
             ))
           ) : (
-            <div className="bg-[#262626] rounded-xl p-6 text-center text-xs text-neutral-400 border border-white/[0.04]">
+            <div className="liquid-glass-card rounded-2xl p-6 text-center text-xs text-neutral-400">
               No reflections recorded yet. Tap &quot;New Note&quot; to log your thoughts.
             </div>
           )}
@@ -497,7 +505,7 @@ export const ToolsView: React.FC = () => {
 
       {/* SECTION 3: UPGRADED POSITION SIZE & RISK CALCULATOR */}
       {section === 'calculator' && (
-        <div className="bg-[#262626] rounded-xl p-4 border border-white/[0.04] shadow-md space-y-4">
+        <div className="liquid-glass-card rounded-3xl p-4 sm:p-5 space-y-4">
           <div className="flex items-center justify-between gap-2">
             <div>
               <h2 className="text-sm font-bold text-white">Position Size Calculator</h2>
@@ -508,9 +516,9 @@ export const ToolsView: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsAccountModalOpen(true)}
-              className="px-3 py-1.5 rounded-lg bg-[#333333] hover:bg-[#404040] text-xs font-semibold text-white flex items-center gap-1.5 cursor-pointer shrink-0"
+              className="px-3.5 py-1.5 rounded-full liquid-glass-pill text-xs font-semibold text-white flex items-center gap-1.5 cursor-pointer shrink-0"
             >
-              <Wallet className="w-3.5 h-3.5 text-[#2196F3]" />
+              <Wallet className="w-3.5 h-3.5 text-neutral-200" />
               <span>Accounts</span>
             </button>
           </div>
@@ -524,10 +532,10 @@ export const ToolsView: React.FC = () => {
               <select
                 value={calcAccountId}
                 onChange={(e) => handleCalcAccountChange(e.target.value)}
-                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-xs font-semibold text-white focus:outline-none focus:border-[#2196F3]"
+                className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-white cursor-pointer"
               >
                 {accounts.map(a => (
-                  <option key={a.id} value={a.id}>
+                  <option key={a.id} value={a.id} className="bg-[#18191D] text-white">
                     {a.name} · {a.type} · {a.currency} ({formatMoney(a.currentBalance, a.currency)})
                   </option>
                 ))}
@@ -543,7 +551,7 @@ export const ToolsView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSpecModalSymbol(cleanCalcSymbol)}
-                  className="text-[11px] font-semibold text-[#2196F3] hover:text-blue-300 flex items-center gap-1 cursor-pointer"
+                  className="text-[11px] font-semibold text-neutral-200 hover:text-white liquid-glass-pill px-2.5 py-1 rounded-full flex items-center gap-1 cursor-pointer"
                 >
                   <Sliders className="w-3 h-3" />
                   <span>{activeSpec ? `Edit ${cleanCalcSymbol} Spec` : `Configure ${cleanCalcSymbol}`}</span>
@@ -558,7 +566,7 @@ export const ToolsView: React.FC = () => {
                 setManualLotInput('');
               }}
               placeholder="e.g. EURUSD, USDJPY, XAUUSD"
-              className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-sm font-mono font-bold text-white uppercase focus:outline-none focus:border-[#2196F3]"
+              className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-white uppercase"
             />
             <div className="flex flex-wrap gap-1.5 mt-2">
               {savedSpecsList.slice(0, 8).map(sp => (
@@ -569,10 +577,10 @@ export const ToolsView: React.FC = () => {
                     setCalcSymbol(sp.symbol);
                     setManualLotInput('');
                   }}
-                  className={`px-2.5 py-1 rounded text-[11px] font-mono font-semibold transition-colors cursor-pointer ${
+                  className={`px-3 py-1 rounded-full text-[11px] font-mono font-semibold transition-colors cursor-pointer ${
                     cleanCalcSymbol === sp.symbol
-                      ? 'bg-[#2196F3] text-white'
-                      : 'bg-[#1C1C1C] text-neutral-400 hover:text-white border border-white/[0.06]'
+                      ? 'liquid-glass-primary'
+                      : 'liquid-glass-pill text-neutral-300 hover:text-white'
                   }`}
                 >
                   {sp.symbol}
@@ -592,7 +600,7 @@ export const ToolsView: React.FC = () => {
                 step="any"
                 value={calcBalance}
                 onChange={(e) => setCalcBalance(e.target.value)}
-                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-sm font-mono font-bold text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
+                className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-white tabular-nums"
               />
             </div>
 
@@ -603,10 +611,10 @@ export const ToolsView: React.FC = () => {
               <select
                 value={calcCurrency}
                 onChange={(e) => setCalcCurrency(e.target.value as AccountCurrency)}
-                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-sm font-mono font-bold text-white focus:outline-none focus:border-[#2196F3]"
+                className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-white cursor-pointer"
               >
                 {SUPPORTED_CURRENCIES.map(c => (
-                  <option key={c} value={c}>
+                  <option key={c} value={c} className="bg-[#18191D] text-white">
                     {c} ({getCurrencySymbol(c)})
                   </option>
                 ))}
@@ -618,12 +626,12 @@ export const ToolsView: React.FC = () => {
                 <label className="text-xs font-semibold text-neutral-300">
                   Risk ({riskMode === 'percent' ? '%' : getCurrencySymbol(calcCurrency)})
                 </label>
-                <div className="flex bg-[#1C1C1C] rounded p-0.5 border border-white/10 text-[10px]">
+                <div className="flex liquid-glass-subcard rounded-full p-0.5 text-[10px]">
                   <button
                     type="button"
                     onClick={() => setRiskMode('percent')}
-                    className={`px-2 py-0.5 rounded font-bold cursor-pointer ${
-                      riskMode === 'percent' ? 'bg-[#2196F3] text-white' : 'text-neutral-400'
+                    className={`px-2.5 py-0.5 rounded-full font-bold cursor-pointer ${
+                      riskMode === 'percent' ? 'liquid-glass-primary' : 'text-neutral-400 hover:text-white'
                     }`}
                   >
                     %
@@ -631,8 +639,8 @@ export const ToolsView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setRiskMode('amount')}
-                    className={`px-2 py-0.5 rounded font-bold cursor-pointer ${
-                      riskMode === 'amount' ? 'bg-[#2196F3] text-white' : 'text-neutral-400'
+                    className={`px-2.5 py-0.5 rounded-full font-bold cursor-pointer ${
+                      riskMode === 'amount' ? 'liquid-glass-primary' : 'text-neutral-400 hover:text-white'
                     }`}
                   >
                     {getCurrencySymbol(calcCurrency)}
@@ -647,7 +655,7 @@ export const ToolsView: React.FC = () => {
                   setRiskValue(e.target.value);
                   setManualLotInput('');
                 }}
-                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-sm font-mono font-bold text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
+                className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-white tabular-nums"
               />
             </div>
           </div>
@@ -664,7 +672,7 @@ export const ToolsView: React.FC = () => {
                 value={calcEntry}
                 onChange={(e) => setCalcEntry(e.target.value)}
                 placeholder="e.g. 1.1000"
-                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-sm font-mono font-bold text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
+                className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-white tabular-nums"
               />
             </div>
             <div>
@@ -677,7 +685,7 @@ export const ToolsView: React.FC = () => {
                 value={calcSl}
                 onChange={(e) => setCalcSl(e.target.value)}
                 placeholder="e.g. 1.0950"
-                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-sm font-mono font-bold text-red-300 tabular-nums focus:outline-none focus:border-[#2196F3]"
+                className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-red-300 tabular-nums"
               />
             </div>
             <div>
@@ -690,13 +698,13 @@ export const ToolsView: React.FC = () => {
                 value={calcTp}
                 onChange={(e) => setCalcTp(e.target.value)}
                 placeholder="For reward est."
-                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-sm font-mono font-bold text-emerald-300 tabular-nums focus:outline-none focus:border-[#2196F3]"
+                className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-emerald-300 tabular-nums"
               />
             </div>
           </div>
 
           {calcActionError && (
-            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs">
+            <div className="flex items-center gap-2 p-2.5 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-200 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{calcActionError}</span>
             </div>
@@ -704,7 +712,7 @@ export const ToolsView: React.FC = () => {
 
           {/* Missing Spec Prompt */}
           {lotCalcResult.status === 'missing_spec' && lotCalcResult.missingSpecSymbol && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 space-y-2">
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 space-y-2">
               <div className="flex items-start gap-2 text-amber-200 text-xs">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                 <div>
@@ -717,7 +725,7 @@ export const ToolsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSpecModalSymbol(lotCalcResult.missingSpecSymbol!)}
-                className="px-3.5 py-2 rounded-lg bg-[#2196F3] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-full liquid-glass-primary text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Sliders className="w-3.5 h-3.5" />
                 <span>Configure {lotCalcResult.missingSpecSymbol}</span>
@@ -727,7 +735,7 @@ export const ToolsView: React.FC = () => {
 
           {/* Missing Conversion Rate Prompt */}
           {lotCalcResult.status === 'missing_conversion' && lotCalcResult.missingConversion && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 space-y-2.5">
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 space-y-2.5">
               <div className="flex items-start gap-2 text-amber-200 text-xs">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
                 <span>
@@ -744,14 +752,14 @@ export const ToolsView: React.FC = () => {
                   value={quickRateInput}
                   onChange={(e) => setQuickRateInput(e.target.value)}
                   placeholder="Rate"
-                  className="flex-1 bg-[#1C1C1C] border border-white/15 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white"
+                  className="flex-1 liquid-glass-input rounded-xl px-2.5 py-1.5 text-xs font-mono text-white"
                 />
                 <span className="text-xs font-mono text-white shrink-0">{missingPairParts[1]}</span>
                 <button
                   type="button"
                   disabled={savingQuickRate}
                   onClick={handleSaveQuickRate}
-                  className="px-3 py-1.5 rounded-lg bg-[#2196F3] text-white text-xs font-bold cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-full liquid-glass-primary text-xs font-bold cursor-pointer"
                 >
                   {savingQuickRate ? '...' : 'Save Rate'}
                 </button>
@@ -761,7 +769,7 @@ export const ToolsView: React.FC = () => {
 
           {/* Validation Errors */}
           {lotCalcResult.status === 'invalid' && lotCalcResult.errors.length > 0 && (
-            <div className="p-3 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs">
+            <div className="p-3 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-200 text-xs">
               {lotCalcResult.errors[0]}
             </div>
           )}
@@ -770,11 +778,11 @@ export const ToolsView: React.FC = () => {
           {lotCalcResult.status === 'ok' && (
             <div className="space-y-3 pt-1">
               <div className={`grid grid-cols-1 ${lotCalcResult.potentialRewardAmount !== null ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-3`}>
-                <div className="bg-[#1C1C1C] rounded-xl p-3.5 border border-[#2196F3]/30">
+                <div className="liquid-glass-subcard rounded-2xl p-3.5 border border-white/20">
                   <span className="text-[11px] text-neutral-400 block">
                     Recommended Lot Size
                   </span>
-                  <span className="text-lg font-bold font-mono text-[#2196F3] tabular-nums mt-0.5 block">
+                  <span className="text-lg font-bold font-mono text-white tabular-nums mt-0.5 block">
                     {lotCalcResult.recommendedLots.toFixed(lotDecimals)} lots
                   </span>
                   <span className="text-[10px] font-mono text-neutral-500 block mt-0.5">
@@ -782,11 +790,11 @@ export const ToolsView: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="bg-[#1C1C1C] rounded-xl p-3.5 border border-white/[0.06]">
+                <div className="liquid-glass-subcard rounded-2xl p-3.5">
                   <span className="text-[11px] text-neutral-400 block">
                     Estimated Risk ({calcCurrency})
                   </span>
-                  <span className="text-lg font-bold font-mono text-[#EF4444] tabular-nums mt-0.5 block">
+                  <span className="text-lg font-bold font-mono text-[#F87171] tabular-nums mt-0.5 block">
                     {formatMoney(lotCalcResult.exactRiskAmount, calcCurrency)}
                   </span>
                   <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">
@@ -795,11 +803,11 @@ export const ToolsView: React.FC = () => {
                 </div>
 
                 {lotCalcResult.potentialRewardAmount !== null && (
-                  <div className="bg-[#1C1C1C] rounded-xl p-3.5 border border-[#2ECC71]/25">
+                  <div className="liquid-glass-subcard rounded-2xl p-3.5 border border-[#34D399]/25">
                     <span className="text-[11px] text-neutral-400 block">
                       Potential Reward ({calcCurrency})
                     </span>
-                    <span className="text-lg font-bold font-mono text-[#2ECC71] tabular-nums mt-0.5 block">
+                    <span className="text-lg font-bold font-mono text-[#34D399] tabular-nums mt-0.5 block">
                       {formatMoney(lotCalcResult.potentialRewardAmount, calcCurrency, true)}
                     </span>
                     <span className="text-[10px] font-mono text-neutral-400 block mt-0.5">
@@ -810,13 +818,13 @@ export const ToolsView: React.FC = () => {
               </div>
 
               {lotCalcResult.tpInvalidWarning && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-2.5 text-[11px] text-red-300">
+                <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-2.5 text-[11px] text-red-200">
                   {lotCalcResult.tpInvalidWarning}
                 </div>
               )}
 
               {/* SL Distance & Broker Limits Summary */}
-              <div className="bg-[#1C1C1C] rounded-xl px-3.5 py-2.5 border border-white/[0.06] flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-neutral-300">
+              <div className="liquid-glass-subcard rounded-2xl px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-neutral-300">
                 <span>
                   SL Distance: <strong className="text-white">{lotCalcResult.slDistancePips} {lotCalcResult.unitLabel}</strong>
                 </span>
@@ -831,7 +839,7 @@ export const ToolsView: React.FC = () => {
               </div>
 
               {/* Manual Lot Adjustment */}
-              <div className="bg-[#1C1C1C] rounded-xl p-3 border border-white/[0.06] flex items-center justify-between gap-3">
+              <div className="liquid-glass-subcard rounded-2xl p-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <span className="text-xs font-semibold text-neutral-200 block">
                     Manual Lot Adjustment (Optional)
@@ -848,14 +856,14 @@ export const ToolsView: React.FC = () => {
                     value={manualLotInput}
                     onChange={(e) => setManualLotInput(e.target.value)}
                     placeholder={lotCalcResult.recommendedLots.toFixed(lotDecimals)}
-                    className="w-24 bg-[#262626] border border-white/15 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-white text-right tabular-nums focus:outline-none focus:border-[#2196F3]"
+                    className="w-24 liquid-glass-input rounded-xl px-2.5 py-1.5 text-xs font-mono font-bold text-white text-right tabular-nums"
                   />
                   {manualLotInput !== '' && (
                     <button
                       type="button"
                       onClick={() => setManualLotInput('')}
                       title="Reset to recommended lot"
-                      className="p-1.5 rounded-lg bg-[#262626] text-neutral-400 hover:text-white cursor-pointer"
+                      className="p-1.5 rounded-full liquid-glass-pill text-neutral-300 hover:text-white cursor-pointer"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
                     </button>
@@ -865,7 +873,7 @@ export const ToolsView: React.FC = () => {
 
               {/* Warnings */}
               {lotCalcResult.warnings.length > 0 && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 space-y-1">
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-2.5 space-y-1">
                   {lotCalcResult.warnings.map((w, idx) => (
                     <p key={idx} className="text-[11px] text-amber-200 leading-snug">
                       {w}
@@ -888,7 +896,7 @@ export const ToolsView: React.FC = () => {
       {section === 'specs' && (
         <div className="space-y-3.5">
           {/* Broker Instrument Specifications */}
-          <div className="bg-[#262626] rounded-xl p-4 border border-white/[0.04] shadow-md space-y-3">
+          <div className="liquid-glass-card rounded-3xl p-4 sm:p-5 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div>
                 <h2 className="text-sm font-bold text-white">Broker Instrument Specifications</h2>
@@ -899,7 +907,7 @@ export const ToolsView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSpecModalSymbol('')}
-                className="px-3 py-2 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold flex items-center gap-1 cursor-pointer shrink-0"
+                className="px-3.5 py-2 rounded-full liquid-glass-primary text-xs font-bold flex items-center gap-1 cursor-pointer shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Symbol</span>
@@ -910,12 +918,12 @@ export const ToolsView: React.FC = () => {
               {savedSpecsList.map(spec => (
                 <div
                   key={spec.symbol}
-                  className="bg-[#1C1C1C] rounded-xl p-3 border border-white/[0.06] flex items-center justify-between gap-3"
+                  className="liquid-glass-subcard rounded-2xl p-3 flex items-center justify-between gap-3"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono font-bold text-white">{spec.symbol}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.06] text-neutral-300">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.08] text-neutral-200">
                         {spec.category}
                       </span>
                       <span className="text-[10px] font-mono text-neutral-400">
@@ -929,7 +937,7 @@ export const ToolsView: React.FC = () => {
                       <span>Lots: {spec.minLot}–{spec.maxLot} (step {spec.lotStep})</span>
                     </div>
                     {(spec.tickValueProfit || spec.tickValueLoss) && (
-                      <div className="text-[10px] font-mono text-[#2196F3] mt-0.5">
+                      <div className="text-[10px] font-mono text-neutral-200 mt-0.5">
                         Broker Tick Val ({spec.tickValueCurrency || 'USD'}): Profit {spec.tickValueProfit ?? '—'} · Loss {spec.tickValueLoss ?? '—'}
                       </div>
                     )}
@@ -939,7 +947,7 @@ export const ToolsView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setSpecModalSymbol(spec.symbol)}
-                      className="px-2.5 py-1.5 rounded-lg bg-[#262626] hover:bg-[#333333] text-xs font-semibold text-neutral-200 cursor-pointer"
+                      className="px-3 py-1.5 rounded-full liquid-glass-pill text-xs font-semibold text-neutral-200 cursor-pointer"
                     >
                       Edit
                     </button>
@@ -947,7 +955,7 @@ export const ToolsView: React.FC = () => {
                       type="button"
                       onClick={() => deleteInstrumentSpec(spec.symbol)}
                       aria-label={`Delete ${spec.symbol} spec`}
-                      className="p-1.5 text-neutral-500 hover:text-[#EF4444] cursor-pointer"
+                      className="p-1.5 rounded-full text-neutral-500 hover:text-[#F87171] hover:bg-white/[0.06] cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -958,7 +966,7 @@ export const ToolsView: React.FC = () => {
           </div>
 
           {/* Currency Conversion Rates */}
-          <div className="bg-[#262626] rounded-xl p-4 border border-white/[0.04] shadow-md space-y-3">
+          <div className="liquid-glass-card rounded-3xl p-4 sm:p-5 space-y-3">
             <div>
               <h2 className="text-sm font-bold text-white">Currency Conversion Rates</h2>
               <p className="text-[11px] text-neutral-400">
@@ -967,7 +975,7 @@ export const ToolsView: React.FC = () => {
             </div>
 
             {rateErr && (
-              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs">
+              <div className="flex items-center gap-2 p-2.5 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-200 text-xs">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{rateErr}</span>
               </div>
@@ -981,7 +989,7 @@ export const ToolsView: React.FC = () => {
                   value={rateFrom}
                   onChange={(e) => setRateFrom(e.target.value)}
                   placeholder="USD"
-                  className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-2.5 py-2 text-xs font-mono font-bold text-white uppercase"
+                  className="w-full liquid-glass-input rounded-xl px-2.5 py-2 text-xs font-mono font-bold text-white uppercase"
                 />
               </div>
               <div className="col-span-3">
@@ -991,7 +999,7 @@ export const ToolsView: React.FC = () => {
                   value={rateTo}
                   onChange={(e) => setRateTo(e.target.value)}
                   placeholder="NGN"
-                  className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-2.5 py-2 text-xs font-mono font-bold text-white uppercase"
+                  className="w-full liquid-glass-input rounded-xl px-2.5 py-2 text-xs font-mono font-bold text-white uppercase"
                 />
               </div>
               <div className="col-span-4">
@@ -1002,14 +1010,14 @@ export const ToolsView: React.FC = () => {
                   value={rateVal}
                   onChange={(e) => setRateVal(e.target.value)}
                   placeholder="e.g. 1650"
-                  className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-2.5 py-2 text-xs font-mono text-white"
+                  className="w-full liquid-glass-input rounded-xl px-2.5 py-2 text-xs font-mono text-white"
                 />
               </div>
               <div className="col-span-2">
                 <button
                   type="submit"
                   disabled={rateBusy}
-                  className="w-full py-2 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold cursor-pointer"
+                  className="w-full py-2 rounded-full liquid-glass-primary text-xs font-bold cursor-pointer"
                 >
                   {rateBusy ? '...' : 'Save'}
                 </button>
@@ -1023,16 +1031,16 @@ export const ToolsView: React.FC = () => {
                   return (
                     <div
                       key={pairKey}
-                      className="bg-[#1C1C1C] rounded-lg px-3 py-2.5 border border-white/[0.06] flex items-center justify-between text-xs font-mono"
+                      className="liquid-glass-subcard rounded-2xl px-3.5 py-2.5 flex items-center justify-between text-xs font-mono"
                     >
                       <span className="text-neutral-200">
-                        1 <strong className="text-white">{f}</strong> = <strong className="text-[#2196F3]">{rate}</strong> <strong className="text-white">{t}</strong>
+                        1 <strong className="text-white">{f}</strong> = <strong className="text-[#34D399]">{rate}</strong> <strong className="text-white">{t}</strong>
                       </span>
                       <button
                         type="button"
                         onClick={() => deleteExchangeRate(pairKey)}
                         aria-label={`Delete ${pairKey} rate`}
-                        className="p-1 text-neutral-500 hover:text-[#EF4444] cursor-pointer"
+                        className="p-1.5 rounded-full text-neutral-500 hover:text-[#F87171] hover:bg-white/[0.06] cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1041,7 +1049,7 @@ export const ToolsView: React.FC = () => {
                 })}
               </div>
             ) : (
-              <div className="bg-[#1C1C1C] rounded-lg p-3 text-center text-[11px] text-neutral-400 border border-white/[0.04]">
+              <div className="liquid-glass-subcard rounded-2xl p-3 text-center text-[11px] text-neutral-400">
                 No custom exchange rates saved yet. Same-currency pairs and USD-base pairs (e.g. USDJPY on USD account) work automatically; add rates like USD → NGN here when needed.
               </div>
             )}
@@ -1063,23 +1071,24 @@ export const ToolsView: React.FC = () => {
               initial={{ opacity: 0, y: 24, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.97 }}
-              className="bg-[#262626] border border-white/[0.08] rounded-t-2xl sm:rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
+              className="liquid-glass-surface rounded-t-3xl sm:rounded-3xl w-full max-w-md overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-[#222222]">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-white/[0.02]">
                 <h3 className="text-base font-bold text-white">New Journal Reflection</h3>
                 <button
                   type="button"
                   onClick={() => setIsNoteModalOpen(false)}
-                  className="p-2 text-neutral-400 hover:text-white cursor-pointer"
+                  aria-label="Close modal"
+                  className="w-9 h-9 rounded-full liquid-glass-pill text-neutral-300 hover:text-white cursor-pointer flex items-center justify-center"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4.5 h-4.5" />
                 </button>
               </div>
 
               <form onSubmit={handleSaveNote} className="p-5 space-y-3.5">
                 {noteError && (
-                  <div className="p-2.5 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs">
+                  <div className="p-2.5 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-200 text-xs">
                     {noteError}
                   </div>
                 )}
@@ -1091,7 +1100,7 @@ export const ToolsView: React.FC = () => {
                     value={noteDate}
                     onChange={(e) => setNoteDate(e.target.value)}
                     required
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs font-mono text-white"
                   />
                 </div>
 
@@ -1103,7 +1112,7 @@ export const ToolsView: React.FC = () => {
                     onChange={(e) => setNoteTitle(e.target.value)}
                     placeholder="e.g. Disciplined London session"
                     required
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs text-white"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs text-white"
                   />
                 </div>
 
@@ -1114,7 +1123,7 @@ export const ToolsView: React.FC = () => {
                     onChange={(e) => setNoteBody(e.target.value)}
                     rows={3}
                     placeholder="What happened in the market? How did you execute?"
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs text-white resize-none"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs text-white resize-none"
                   />
                 </div>
 
@@ -1125,7 +1134,7 @@ export const ToolsView: React.FC = () => {
                     value={noteEmotions}
                     onChange={(e) => setNoteEmotions(e.target.value)}
                     placeholder="e.g. Calm, patient"
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs text-white"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs text-white"
                   />
                 </div>
 
@@ -1136,7 +1145,7 @@ export const ToolsView: React.FC = () => {
                     value={noteLessons}
                     onChange={(e) => setNoteLessons(e.target.value)}
                     placeholder="e.g. Waited for candle close"
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs text-white"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs text-white"
                   />
                 </div>
 
@@ -1144,14 +1153,14 @@ export const ToolsView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsNoteModalOpen(false)}
-                    className="px-4 py-2.5 rounded-lg bg-[#333333] text-xs font-semibold text-neutral-200 cursor-pointer"
+                    className="px-4 py-2.5 rounded-full liquid-glass-pill text-xs font-semibold text-neutral-200 cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={noteBusy}
-                    className="px-5 py-2.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                    className="px-5 py-2.5 rounded-full liquid-glass-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                   >
                     {noteBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>Save Note</span>

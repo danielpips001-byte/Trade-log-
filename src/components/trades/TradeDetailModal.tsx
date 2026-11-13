@@ -161,28 +161,28 @@ export const TradeDetailModal: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="bg-[#262626] border border-white/[0.08] rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
+            className="liquid-glass-surface rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-[#222222]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-white/[0.02]">
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold text-white">{selectedTrade.asset}</h3>
                   <span
-                    className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
                       selectedTrade.direction === 'BUY'
-                        ? 'bg-[#2ECC71]/20 text-[#2ECC71]'
-                        : 'bg-[#EF4444]/20 text-[#EF4444]'
+                        ? 'bg-[#34D399]/18 text-[#34D399] border border-[#34D399]/30'
+                        : 'bg-[#F87171]/18 text-[#F87171] border border-[#F87171]/30'
                     }`}
                   >
                     {selectedTrade.direction}
                   </span>
                   <span
-                    className={`text-[11px] font-bold px-2 py-0.5 rounded ${
+                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
                       isOpen
-                        ? 'bg-[#2196F3]/20 text-[#2196F3]'
-                        : 'bg-white/10 text-neutral-300'
+                        ? 'bg-white/15 text-white border border-white/25'
+                        : 'bg-white/[0.07] text-neutral-300 border border-white/10'
                     }`}
                   >
                     {selectedTrade.status.toUpperCase()}
@@ -193,13 +193,13 @@ export const TradeDetailModal: React.FC = () => {
                 </span>
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 {!isEditing && (
                   <button
                     type="button"
                     onClick={startEdit}
                     aria-label="Edit trade"
-                    className="p-2 rounded-lg text-neutral-300 hover:text-white hover:bg-white/[0.06] cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+                    className="w-9 h-9 rounded-full liquid-glass-pill text-neutral-300 hover:text-white cursor-pointer flex items-center justify-center"
                   >
                     <Edit3 className="w-4 h-4" />
                   </button>
@@ -208,7 +208,7 @@ export const TradeDetailModal: React.FC = () => {
                   type="button"
                   onClick={() => setConfirmDelete(!confirmDelete)}
                   aria-label="Delete trade"
-                  className="p-2 rounded-lg text-neutral-400 hover:text-[#EF4444] hover:bg-white/[0.06] cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+                  className="w-9 h-9 rounded-full liquid-glass-pill text-neutral-300 hover:text-[#F87171] cursor-pointer flex items-center justify-center"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -216,9 +216,9 @@ export const TradeDetailModal: React.FC = () => {
                   type="button"
                   onClick={() => setSelectedTradeId(null)}
                   aria-label="Close detail"
-                  className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/[0.06] cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+                  className="w-9 h-9 rounded-full liquid-glass-pill text-neutral-300 hover:text-white cursor-pointer flex items-center justify-center"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4.5 h-4.5" />
                 </button>
               </div>
             </div>
@@ -226,20 +226,20 @@ export const TradeDetailModal: React.FC = () => {
             {/* Body */}
             <div className="p-5 overflow-y-auto space-y-4">
               {errorMsg && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs">
+                <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-200 text-xs">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
 
               {confirmDelete && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3.5 flex items-center justify-between gap-3">
+                <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-3.5 flex items-center justify-between gap-3">
                   <span className="text-xs font-medium text-red-200">Delete this trade permanently?</span>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(false)}
-                      className="px-3 py-1.5 rounded bg-[#333333] text-xs font-semibold text-neutral-200 cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-full liquid-glass-pill text-xs font-semibold text-neutral-200 cursor-pointer"
                     >
                       Keep
                     </button>
@@ -247,7 +247,7 @@ export const TradeDetailModal: React.FC = () => {
                       type="button"
                       disabled={isBusy}
                       onClick={handleDelete}
-                      className="px-3 py-1.5 rounded bg-[#EF4444] text-xs font-bold text-white cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-full bg-[#F87171] text-xs font-bold text-neutral-950 cursor-pointer"
                     >
                       {isBusy ? 'Deleting...' : 'Delete'}
                     </button>
@@ -265,7 +265,7 @@ export const TradeDetailModal: React.FC = () => {
                         value={editAsset}
                         onChange={(e) => setEditAsset(e.target.value)}
                         required
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono font-bold text-white uppercase"
+                        className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs font-mono font-bold text-white uppercase"
                       />
                     </div>
                     <div>
@@ -273,10 +273,10 @@ export const TradeDetailModal: React.FC = () => {
                       <select
                         value={editDirection}
                         onChange={(e) => setEditDirection(e.target.value as TradeDirection)}
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs text-white"
+                        className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs text-white cursor-pointer"
                       >
-                        <option value="BUY">BUY</option>
-                        <option value="SELL">SELL</option>
+                        <option value="BUY" className="bg-[#18191D] text-white">BUY</option>
+                        <option value="SELL" className="bg-[#18191D] text-white">SELL</option>
                       </select>
                     </div>
                   </div>
@@ -289,7 +289,7 @@ export const TradeDetailModal: React.FC = () => {
                         step="any"
                         value={editEntry}
                         onChange={(e) => setEditEntry(e.target.value)}
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white"
+                        className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs font-mono text-white"
                       />
                     </div>
                     <div>
@@ -299,7 +299,7 @@ export const TradeDetailModal: React.FC = () => {
                         step="any"
                         value={editSl}
                         onChange={(e) => setEditSl(e.target.value)}
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white"
+                        className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs font-mono text-white"
                       />
                     </div>
                     <div>
@@ -309,7 +309,7 @@ export const TradeDetailModal: React.FC = () => {
                         step="any"
                         value={editTp}
                         onChange={(e) => setEditTp(e.target.value)}
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white"
+                        className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs font-mono text-white"
                       />
                     </div>
                   </div>
@@ -322,7 +322,7 @@ export const TradeDetailModal: React.FC = () => {
                         step="any"
                         value={editLots}
                         onChange={(e) => setEditLots(e.target.value)}
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white"
+                        className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs font-mono text-white"
                       />
                     </div>
                     <div>
@@ -330,10 +330,10 @@ export const TradeDetailModal: React.FC = () => {
                       <select
                         value={editStatus}
                         onChange={(e) => setEditStatus(e.target.value as TradeStatus)}
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs text-white"
+                        className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs text-white cursor-pointer"
                       >
-                        <option value="Open">Open</option>
-                        <option value="Closed">Closed</option>
+                        <option value="Open" className="bg-[#18191D] text-white">Open</option>
+                        <option value="Closed" className="bg-[#18191D] text-white">Closed</option>
                       </select>
                     </div>
                     <div>
@@ -346,7 +346,7 @@ export const TradeDetailModal: React.FC = () => {
                         disabled={editStatus === 'Open'}
                         value={editPnl}
                         onChange={(e) => setEditPnl(e.target.value)}
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white disabled:opacity-40"
+                        className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs font-mono text-white disabled:opacity-40"
                       />
                     </div>
                   </div>
@@ -358,7 +358,7 @@ export const TradeDetailModal: React.FC = () => {
                         type="date"
                         value={editDate}
                         onChange={(e) => setEditDate(e.target.value)}
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white"
+                        className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs font-mono text-white"
                       />
                     </div>
                     <div>
@@ -368,7 +368,7 @@ export const TradeDetailModal: React.FC = () => {
                         step="any"
                         value={editExit}
                         onChange={(e) => setEditExit(e.target.value)}
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white"
+                        className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs font-mono text-white"
                       />
                     </div>
                   </div>
@@ -379,7 +379,7 @@ export const TradeDetailModal: React.FC = () => {
                       value={editNotes}
                       onChange={(e) => setEditNotes(e.target.value)}
                       rows={3}
-                      className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs text-white resize-none"
+                      className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs text-white resize-none"
                     />
                   </div>
 
@@ -387,14 +387,14 @@ export const TradeDetailModal: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setIsEditing(false)}
-                      className="px-4 py-2 rounded-lg bg-[#333333] text-xs font-semibold text-neutral-200 cursor-pointer"
+                      className="px-4 py-2 rounded-full liquid-glass-pill text-xs font-semibold text-neutral-200 cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isBusy}
-                      className="px-5 py-2 rounded-lg bg-[#2196F3] text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer"
+                      className="px-5 py-2 rounded-full liquid-glass-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                     >
                       {isBusy && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                       <span>Save Changes</span>
@@ -404,7 +404,7 @@ export const TradeDetailModal: React.FC = () => {
               ) : (
                 <>
                   {/* Outcome / P&L Hero Card */}
-                  <div className="bg-[#1E1E1E] border border-white/[0.06] rounded-xl p-4 flex items-center justify-between">
+                  <div className="liquid-glass-subcard rounded-2xl p-4 flex items-center justify-between">
                     <div>
                       <span className="text-[11px] text-neutral-400 block">
                         {isOpen ? 'Status' : (selectedTrade.closeOutcome || 'Realized P/L')}
@@ -412,11 +412,11 @@ export const TradeDetailModal: React.FC = () => {
                       <span
                         className={`text-2xl font-bold font-mono tabular-nums ${
                           isOpen
-                            ? 'text-[#2196F3]'
+                            ? 'text-white'
                             : selectedTrade.realizedPnl > 0
-                            ? 'text-[#2ECC71]'
+                            ? 'text-[#34D399]'
                             : selectedTrade.realizedPnl < 0
-                            ? 'text-[#EF4444]'
+                            ? 'text-[#F87171]'
                             : 'text-neutral-300'
                         }`}
                       >
@@ -426,7 +426,7 @@ export const TradeDetailModal: React.FC = () => {
                       </span>
                       {!isOpen && account && account.startingBalance > 0 && (
                         <span className={`text-xs font-mono font-semibold block mt-0.5 ${
-                          pctReturn >= 0 ? 'text-[#2ECC71]' : 'text-[#EF4444]'
+                          pctReturn >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'
                         }`}>
                           {pctReturn >= 0 ? '+' : ''}{pctReturn.toFixed(2)}% account return
                         </span>
@@ -437,7 +437,7 @@ export const TradeDetailModal: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setShowCloseModal(true)}
-                        className="px-4 py-2.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[44px]"
+                        className="px-4 py-2.5 rounded-full liquid-glass-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[44px]"
                       >
                         <CheckCircle className="w-4 h-4" />
                         <span>Close Trade</span>
@@ -447,25 +447,25 @@ export const TradeDetailModal: React.FC = () => {
 
                   {/* Execution Prices Grid */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    <div className="bg-[#1E1E1E] rounded-lg p-3">
+                    <div className="liquid-glass-subcard rounded-2xl p-3">
                       <span className="text-[10px] text-neutral-400 block">Entry Price</span>
                       <span className="text-sm font-bold font-mono text-white tabular-nums">
                         {selectedTrade.entryPrice}
                       </span>
                     </div>
-                    <div className="bg-[#1E1E1E] rounded-lg p-3">
+                    <div className="liquid-glass-subcard rounded-2xl p-3">
                       <span className="text-[10px] text-neutral-400 block">Stop Loss</span>
                       <span className="text-sm font-bold font-mono text-red-300 tabular-nums">
                         {selectedTrade.stopLoss || '—'}
                       </span>
                     </div>
-                    <div className="bg-[#1E1E1E] rounded-lg p-3">
+                    <div className="liquid-glass-subcard rounded-2xl p-3">
                       <span className="text-[10px] text-neutral-400 block">Take Profit</span>
                       <span className="text-sm font-bold font-mono text-emerald-300 tabular-nums">
                         {selectedTrade.takeProfit || '—'}
                       </span>
                     </div>
-                    <div className="bg-[#1E1E1E] rounded-lg p-3">
+                    <div className="liquid-glass-subcard rounded-2xl p-3">
                       <span className="text-[10px] text-neutral-400 block">
                         {isOpen ? 'Lot Size' : 'Exit Price'}
                       </span>
@@ -480,14 +480,14 @@ export const TradeDetailModal: React.FC = () => {
                     (selectedTrade.grossRealizedPnl !== undefined ||
                       (selectedTrade.commission && selectedTrade.commission !== 0) ||
                       (selectedTrade.swap && selectedTrade.swap !== 0)) && (
-                      <div className="bg-[#1E1E1E] rounded-xl p-3 grid grid-cols-3 gap-2 text-center border border-white/[0.04] font-mono">
+                      <div className="liquid-glass-subcard rounded-2xl p-3 grid grid-cols-3 gap-2 text-center font-mono">
                         <div>
                           <span className="text-[10px] text-neutral-400 block font-sans">Gross P/L</span>
                           <span
                             className={`text-xs font-bold tabular-nums ${
                               (selectedTrade.grossRealizedPnl ?? selectedTrade.realizedPnl) >= 0
-                                ? 'text-[#2ECC71]'
-                                : 'text-[#EF4444]'
+                                ? 'text-[#34D399]'
+                                : 'text-[#F87171]'
                             }`}
                           >
                             {formatMoney(
@@ -518,13 +518,13 @@ export const TradeDetailModal: React.FC = () => {
 
                   {/* Planned Risk & Target Projections (kept separate from realized P/L) */}
                   {tradeCalcs && tradeCalcs.status === 'ok' && (tradeCalcs.estimatedRisk !== null || tradeCalcs.estimatedProfit !== null) && (
-                    <div className="bg-[#1E1E1E] rounded-xl p-3.5 border border-white/[0.04] space-y-2">
+                    <div className="liquid-glass-subcard rounded-2xl p-3.5 space-y-2">
                       <div className="flex items-center justify-between text-[10px] text-neutral-400">
                         <span className="font-semibold uppercase tracking-wider">Planned Trade Projections</span>
                         <button
                           type="button"
                           onClick={() => setSpecModalSymbol(selectedTrade.asset)}
-                          className="text-[#2196F3] hover:text-blue-300 inline-flex items-center gap-1 cursor-pointer"
+                          className="text-neutral-200 hover:text-white liquid-glass-pill px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Sliders className="w-3 h-3" />
                           <span>{selectedTrade.asset} Spec</span>
@@ -535,7 +535,7 @@ export const TradeDetailModal: React.FC = () => {
                           <span className="text-[10px] text-neutral-400 block">
                             Planned Profit ({tradeCalcs.tpPips} {tradeCalcs.unitLabel})
                           </span>
-                          <span className="text-xs font-bold font-mono text-[#2ECC71] tabular-nums">
+                          <span className="text-xs font-bold font-mono text-[#34D399] tabular-nums">
                             {tradeCalcs.estimatedProfit !== null
                               ? formatMoney(tradeCalcs.estimatedProfit, accountCurrency, true)
                               : '—'}
@@ -545,7 +545,7 @@ export const TradeDetailModal: React.FC = () => {
                           <span className="text-[10px] text-neutral-400 block">
                             Planned Risk ({tradeCalcs.slPips} {tradeCalcs.unitLabel})
                           </span>
-                          <span className="text-xs font-bold font-mono text-[#EF4444] tabular-nums">
+                          <span className="text-xs font-bold font-mono text-[#F87171] tabular-nums">
                             {tradeCalcs.estimatedRisk !== null
                               ? formatMoney(-tradeCalcs.estimatedRisk, accountCurrency, true)
                               : '—'}
@@ -553,7 +553,7 @@ export const TradeDetailModal: React.FC = () => {
                         </div>
                         <div>
                           <span className="text-[10px] text-neutral-400 block">Risk-to-Reward</span>
-                          <span className="text-xs font-bold font-mono text-[#2196F3] tabular-nums">
+                          <span className="text-xs font-bold font-mono text-white tabular-nums">
                             {tradeCalcs.riskReward ? formatRiskReward(tradeCalcs.riskReward) : '—'}
                           </span>
                         </div>
@@ -562,14 +562,14 @@ export const TradeDetailModal: React.FC = () => {
                   )}
 
                   {tradeCalcs && tradeCalcs.status === 'missing_spec' && (
-                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center justify-between gap-2">
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 flex items-center justify-between gap-2">
                       <span className="text-xs text-amber-200">
                         Missing broker spec for {selectedTrade.asset}
                       </span>
                       <button
                         type="button"
                         onClick={() => setSpecModalSymbol(selectedTrade.asset)}
-                        className="px-3 py-1.5 rounded-lg bg-[#2196F3] text-white text-[11px] font-bold cursor-pointer shrink-0"
+                        className="px-3.5 py-1.5 rounded-full liquid-glass-primary text-[11px] font-bold cursor-pointer shrink-0"
                       >
                         Configure Spec
                       </button>
@@ -577,14 +577,14 @@ export const TradeDetailModal: React.FC = () => {
                   )}
 
                   {tradeCalcs && tradeCalcs.status === 'invalid_prices' && tradeCalcs.errors.length > 0 && (
-                    <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-xs text-red-300">
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-3 text-xs text-red-200">
                       {tradeCalcs.errors[0]}
                     </div>
                   )}
 
                   {/* Notes */}
                   {selectedTrade.notes && (
-                    <div className="bg-[#1E1E1E] rounded-xl p-3.5">
+                    <div className="liquid-glass-subcard rounded-2xl p-3.5">
                       <span className="text-[11px] font-semibold text-neutral-400 block mb-1">Notes</span>
                       <p className="text-xs text-neutral-200 whitespace-pre-line leading-relaxed">
                         {selectedTrade.notes}

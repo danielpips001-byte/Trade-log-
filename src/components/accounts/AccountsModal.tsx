@@ -14,11 +14,12 @@ import {
   Trash2,
   Loader2,
   AlertCircle,
-  Wallet,
   Layers,
   KeyRound,
   Copy
 } from 'lucide-react';
+import { TradeLogLogo } from '../brand/TradeLogLogo';
+import { PWAInstallControl } from '../pwa/PWAInstallControl';
 import { motion, AnimatePresence } from 'motion/react';
 
 const ALL_CURRENCIES: AccountCurrency[] = ['USD', 'NGN', 'EUR', 'GBP', 'AUD', 'JPY'];
@@ -229,13 +230,13 @@ export const AccountsModal: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="bg-[#262626] border border-white/[0.08] rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[88vh] flex flex-col shadow-2xl overflow-hidden"
+            className="liquid-glass-surface rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[88vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-[#222222]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-white/[0.02]">
               <div className="flex items-center gap-2.5">
-                <Wallet className="w-5 h-5 text-[#2196F3]" />
+                <TradeLogLogo size="xs" />
                 <h2 className="text-base font-bold text-white">
                   {mode === 'list' ? 'Trading Accounts' : 'Create Account'}
                 </h2>
@@ -248,7 +249,7 @@ export const AccountsModal: React.FC = () => {
                       setErrorMsg(null);
                       setMode('create');
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-semibold transition-colors cursor-pointer min-h-[36px]"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full liquid-glass-primary text-xs font-bold transition-colors cursor-pointer min-h-[36px]"
                   >
                     <Plus className="w-4 h-4" />
                     <span>New Account</span>
@@ -260,7 +261,7 @@ export const AccountsModal: React.FC = () => {
                       setErrorMsg(null);
                       setMode('list');
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-[#333333] hover:bg-[#3F3F3F] text-neutral-200 text-xs font-semibold cursor-pointer min-h-[36px]"
+                    className="px-3.5 py-1.5 rounded-full liquid-glass-pill text-neutral-200 text-xs font-semibold cursor-pointer min-h-[36px]"
                   >
                     Back
                   </button>
@@ -269,9 +270,9 @@ export const AccountsModal: React.FC = () => {
                   type="button"
                   onClick={handleClose}
                   aria-label="Close modal"
-                  className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/[0.06] cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+                  className="w-9 h-9 rounded-full liquid-glass-pill text-neutral-300 hover:text-white cursor-pointer flex items-center justify-center"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4.5 h-4.5" />
                 </button>
               </div>
             </div>
@@ -279,7 +280,7 @@ export const AccountsModal: React.FC = () => {
             {/* Body */}
             <div className="p-4 sm:p-5 overflow-y-auto space-y-3">
               {errorMsg && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-medium">
+                <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-200 text-xs font-medium">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
@@ -298,7 +299,7 @@ export const AccountsModal: React.FC = () => {
                       placeholder="e.g. Exness NGN, FTMO USD, Live Portfolio"
                       required
                       autoFocus
-                      className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#2196F3]"
+                      className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-sm text-white placeholder-neutral-500"
                     />
                   </div>
 
@@ -311,10 +312,10 @@ export const AccountsModal: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleCreateCurrencySelect('USD')}
-                        className={`py-2.5 px-3 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+                        className={`py-2.5 px-3 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
                           currency === 'USD'
-                            ? 'bg-[#2196F3] text-white border-[#2196F3]'
-                            : 'bg-[#1C1C1C] text-neutral-300 border-white/10 hover:border-white/25'
+                            ? 'liquid-glass-primary'
+                            : 'liquid-glass-pill text-neutral-300'
                         }`}
                       >
                         USD ($)
@@ -322,10 +323,10 @@ export const AccountsModal: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleCreateCurrencySelect('NGN')}
-                        className={`py-2.5 px-3 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+                        className={`py-2.5 px-3 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
                           currency === 'NGN'
-                            ? 'bg-[#2196F3] text-white border-[#2196F3]'
-                            : 'bg-[#1C1C1C] text-neutral-300 border-white/10 hover:border-white/25'
+                            ? 'liquid-glass-primary'
+                            : 'liquid-glass-pill text-neutral-300'
                         }`}
                       >
                         NGN (₦)
@@ -334,10 +335,10 @@ export const AccountsModal: React.FC = () => {
                         value={currency}
                         onChange={(e) => handleCreateCurrencySelect(e.target.value as AccountCurrency)}
                         aria-label="Select currency"
-                        className="bg-[#1C1C1C] border border-white/10 rounded-lg px-2.5 py-2 text-xs font-semibold text-neutral-200 focus:outline-none focus:border-[#2196F3]"
+                        className="liquid-glass-input rounded-full px-3 py-2 text-xs font-semibold text-neutral-200 cursor-pointer"
                       >
                         {ALL_CURRENCIES.map(c => (
-                          <option key={c} value={c}>
+                          <option key={c} value={c} className="bg-[#18191D] text-white">
                             {c} ({getCurrencySymbol(c)})
                           </option>
                         ))}
@@ -353,11 +354,11 @@ export const AccountsModal: React.FC = () => {
                       <select
                         value={type}
                         onChange={(e) => setType(e.target.value as AccountType)}
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#2196F3]"
+                        className="w-full liquid-glass-input rounded-2xl px-3 py-2.5 text-sm text-white cursor-pointer"
                       >
-                        <option value="Live">Live</option>
-                        <option value="Demo">Demo</option>
-                        <option value="Prop Firm">Prop Firm</option>
+                        <option value="Live" className="bg-[#18191D] text-white">Live</option>
+                        <option value="Demo" className="bg-[#18191D] text-white">Demo</option>
+                        <option value="Prop Firm" className="bg-[#18191D] text-white">Prop Firm</option>
                       </select>
                     </div>
 
@@ -371,7 +372,7 @@ export const AccountsModal: React.FC = () => {
                         value={startingBalance}
                         onChange={(e) => setStartingBalance(e.target.value)}
                         required
-                        className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3.5 py-2.5 text-sm font-mono font-bold text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
+                        className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-white tabular-nums"
                       />
                     </div>
                   </div>
@@ -380,14 +381,14 @@ export const AccountsModal: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setMode('list')}
-                      className="px-4 py-2.5 rounded-lg bg-[#333333] hover:bg-[#404040] text-neutral-200 text-xs font-semibold cursor-pointer min-h-[44px]"
+                      className="px-4 py-2.5 rounded-full liquid-glass-pill text-neutral-200 text-xs font-semibold cursor-pointer min-h-[44px]"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isSaving}
-                      className="px-5 py-2.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] disabled:opacity-60 text-white text-xs font-bold flex items-center gap-2 cursor-pointer min-h-[44px]"
+                      className="px-5 py-2.5 rounded-full liquid-glass-primary disabled:opacity-60 text-xs font-bold flex items-center gap-2 cursor-pointer min-h-[44px]"
                     >
                       {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                       <span>Create Account</span>
@@ -399,10 +400,10 @@ export const AccountsModal: React.FC = () => {
                   {/* All Accounts Option & Separate Currency Subtotals */}
                   {accounts.length > 1 && (
                     <div
-                      className={`rounded-xl p-4 border transition-colors space-y-3 ${
+                      className={`liquid-glass-card rounded-2xl p-4 transition-colors space-y-3 ${
                         selectedAccountId === 'all'
-                          ? 'bg-[#2E2E2E] border-[#2196F3]'
-                          : 'bg-[#1F1F1F] border-white/[0.06]'
+                          ? 'border-white/40 bg-white/[0.08]'
+                          : ''
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
@@ -413,7 +414,7 @@ export const AccountsModal: React.FC = () => {
                           }}
                           className="flex items-center gap-2.5 flex-1 cursor-pointer"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-[#2196F3]/15 flex items-center justify-center text-[#2196F3] shrink-0">
+                          <div className="w-8 h-8 rounded-full liquid-glass-pill flex items-center justify-center text-white shrink-0">
                             <Layers className="w-4 h-4" />
                           </div>
                           <div>
@@ -430,10 +431,10 @@ export const AccountsModal: React.FC = () => {
                             setSelectedAccountId('all');
                             handleClose();
                           }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+                          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
                             selectedAccountId === 'all'
-                              ? 'bg-[#2196F3]/20 text-[#2196F3]'
-                              : 'bg-[#333333] hover:bg-[#404040] text-neutral-200'
+                              ? 'liquid-glass-primary'
+                              : 'liquid-glass-pill text-neutral-200'
                           }`}
                         >
                           {selectedAccountId === 'all' && <Check className="w-3.5 h-3.5" />}
@@ -441,10 +442,10 @@ export const AccountsModal: React.FC = () => {
                         </button>
                       </div>
 
-                      {/* Separate Currency Totals (Never mixed!) */}
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/[0.06]">
+                      {/* Separate Currency Totals */}
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/[0.08]">
                         {portfolioSummary.subtotalsByCurrency.map(sub => (
-                          <div key={sub.currency} className="bg-[#181818] rounded-lg p-2.5 border border-white/[0.04]">
+                          <div key={sub.currency} className="liquid-glass-subcard rounded-xl p-2.5">
                             <span className="text-[10px] font-semibold text-neutral-400 block">
                               {sub.currency} ({sub.accountCount} {sub.accountCount === 1 ? 'acct' : 'accts'})
                             </span>
@@ -455,21 +456,21 @@ export const AccountsModal: React.FC = () => {
                         ))}
                       </div>
 
-                      {/* Converted Overall Total (only when mixed currencies & explicit rate provided) */}
+                      {/* Converted Overall Total */}
                       {!portfolioSummary.isSingleCurrency && (
-                        <div className="bg-[#181818] rounded-lg p-2.5 border border-white/[0.05] space-y-2">
+                        <div className="liquid-glass-subcard rounded-xl p-2.5 space-y-2">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-[11px] text-neutral-400 font-semibold">
                               Converted Total
                             </span>
-                            <div className="flex bg-[#262626] rounded p-0.5 border border-white/10 text-[10px]">
+                            <div className="flex liquid-glass-subcard rounded-full p-0.5 text-[10px]">
                               {(['USD', 'NGN'] as const).map(rc => (
                                 <button
                                   key={rc}
                                   type="button"
                                   onClick={() => setReportingCurrency(rc)}
-                                  className={`px-2 py-0.5 rounded font-bold cursor-pointer ${
-                                    reportingCurrency === rc ? 'bg-[#2196F3] text-white' : 'text-neutral-400'
+                                  className={`px-2 py-0.5 rounded-full font-bold cursor-pointer ${
+                                    reportingCurrency === rc ? 'liquid-glass-primary' : 'text-neutral-400'
                                   }`}
                                 >
                                   {rc} ({getCurrencySymbol(rc)})
@@ -508,7 +509,7 @@ export const AccountsModal: React.FC = () => {
                                   value={quickRateInput}
                                   onChange={(e) => setQuickRateInput(e.target.value)}
                                   placeholder="Rate"
-                                  className="flex-1 bg-[#262626] border border-white/15 rounded px-2 py-1 text-xs font-mono text-white"
+                                  className="flex-1 liquid-glass-input rounded-xl px-2.5 py-1.5 text-xs font-mono text-white"
                                 />
                                 <span className="text-[11px] font-mono text-neutral-200 shrink-0">
                                   {portfolioSummary.convertedTotal.missingConversions[0].suggestedKey.split('_')[1]}
@@ -520,7 +521,7 @@ export const AccountsModal: React.FC = () => {
                                     !portfolioSummary.convertedTotal.ok &&
                                     handleSaveQuickRate(portfolioSummary.convertedTotal.missingConversions[0].suggestedKey)
                                   }
-                                  className="px-2.5 py-1 rounded bg-[#2196F3] text-white text-[11px] font-bold cursor-pointer"
+                                  className="px-3.5 py-1.5 rounded-full liquid-glass-primary text-[11px] font-bold cursor-pointer"
                                 >
                                   {savingRate ? '...' : 'Save'}
                                 </button>
@@ -544,10 +545,10 @@ export const AccountsModal: React.FC = () => {
                     return (
                       <div
                         key={acc.id}
-                        className={`rounded-xl p-4 border transition-colors ${
+                        className={`liquid-glass-card rounded-2xl p-4 transition-colors ${
                           isSelected
-                            ? 'bg-[#2E2E2E] border-[#2196F3]'
-                            : 'bg-[#1F1F1F] border-white/[0.06]'
+                            ? 'border-white/40 bg-white/[0.08]'
+                            : ''
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -561,7 +562,7 @@ export const AccountsModal: React.FC = () => {
                             <div className="flex items-center gap-2 text-[11px] text-neutral-400 mb-0.5">
                               <span>{acc.type}</span>
                               <span>·</span>
-                              <span className="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono font-bold text-[10px]">
+                              <span className="text-neutral-200 font-mono font-bold">
                                 {acc.currency} ({getCurrencySymbol(acc.currency)})
                               </span>
                               <span>·</span>
@@ -576,10 +577,10 @@ export const AccountsModal: React.FC = () => {
                               setSelectedAccountId(acc.id);
                               handleClose();
                             }}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
                               isSelected
-                                ? 'bg-[#2196F3]/20 text-[#2196F3]'
-                                : 'bg-[#333333] hover:bg-[#404040] text-neutral-200'
+                                ? 'liquid-glass-primary'
+                                : 'liquid-glass-pill text-neutral-200'
                             }`}
                           >
                             {isSelected && <Check className="w-3.5 h-3.5" />}
@@ -587,7 +588,7 @@ export const AccountsModal: React.FC = () => {
                           </button>
                         </div>
 
-                        <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between">
+                        <div className="mt-3 pt-3 border-t border-white/[0.08] flex items-center justify-between">
                           <div>
                             <span className="text-[11px] text-neutral-400 block">Balance</span>
                             <span className="text-lg font-bold font-mono text-white tabular-nums">
@@ -599,7 +600,7 @@ export const AccountsModal: React.FC = () => {
                             <span className="text-[11px] text-neutral-400 block">Net Return</span>
                             <span
                               className={`text-xs font-bold font-mono tabular-nums ${
-                                netChange >= 0 ? 'text-[#2ECC71]' : 'text-[#EF4444]'
+                                netChange >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'
                               }`}
                             >
                               {formatMoney(netChange, acc.currency, true)} ({pctChange >= 0 ? '+' : ''}{pctChange.toFixed(2)}%)
@@ -608,7 +609,7 @@ export const AccountsModal: React.FC = () => {
                         </div>
 
                         {isEditingThis ? (
-                          <div className="mt-3 pt-3 border-t border-white/[0.06] space-y-2.5">
+                          <div className="mt-3 pt-3 border-t border-white/[0.08] space-y-2.5">
                             <div className="grid grid-cols-2 gap-2">
                               <div>
                                 <label className="block text-[10px] text-neutral-400 mb-1">Name</label>
@@ -616,7 +617,7 @@ export const AccountsModal: React.FC = () => {
                                   type="text"
                                   value={editName}
                                   onChange={(e) => setEditName(e.target.value)}
-                                  className="w-full bg-[#141414] border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#2196F3]"
+                                  className="w-full liquid-glass-input rounded-xl px-2.5 py-1.5 text-xs text-white"
                                 />
                               </div>
                               <div>
@@ -624,11 +625,11 @@ export const AccountsModal: React.FC = () => {
                                 <select
                                   value={editType}
                                   onChange={(e) => setEditType(e.target.value as AccountType)}
-                                  className="w-full bg-[#141414] border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#2196F3]"
+                                  className="w-full liquid-glass-input rounded-xl px-2.5 py-1.5 text-xs text-white"
                                 >
-                                  <option value="Live">Live</option>
-                                  <option value="Demo">Demo</option>
-                                  <option value="Prop Firm">Prop Firm</option>
+                                  <option value="Live" className="bg-[#18191D]">Live</option>
+                                  <option value="Demo" className="bg-[#18191D]">Demo</option>
+                                  <option value="Prop Firm" className="bg-[#18191D]">Prop Firm</option>
                                 </select>
                               </div>
                             </div>
@@ -639,10 +640,10 @@ export const AccountsModal: React.FC = () => {
                                 <select
                                   value={editCurrency}
                                   onChange={(e) => setEditCurrency(e.target.value as AccountCurrency)}
-                                  className="w-full bg-[#141414] border border-white/15 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-white focus:outline-none focus:border-[#2196F3]"
+                                  className="w-full liquid-glass-input rounded-xl px-2.5 py-1.5 text-xs font-mono font-bold text-white"
                                 >
                                   {ALL_CURRENCIES.map(c => (
-                                    <option key={c} value={c}>
+                                    <option key={c} value={c} className="bg-[#18191D]">
                                       {c} ({getCurrencySymbol(c)})
                                     </option>
                                   ))}
@@ -657,7 +658,7 @@ export const AccountsModal: React.FC = () => {
                                   step="any"
                                   value={editBalance}
                                   onChange={(e) => setEditBalance(e.target.value)}
-                                  className="w-full bg-[#141414] border border-white/15 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
+                                  className="w-full liquid-glass-input rounded-xl px-2.5 py-1.5 text-xs font-mono text-white tabular-nums"
                                 />
                               </div>
                             </div>
@@ -672,7 +673,7 @@ export const AccountsModal: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => setEditingId(null)}
-                                className="px-3 py-1.5 rounded-lg bg-[#333333] text-neutral-300 text-xs font-semibold cursor-pointer"
+                                className="px-3.5 py-1.5 rounded-full liquid-glass-pill text-neutral-300 text-xs font-semibold cursor-pointer"
                               >
                                 Cancel
                               </button>
@@ -680,7 +681,7 @@ export const AccountsModal: React.FC = () => {
                                 type="button"
                                 disabled={isSaving}
                                 onClick={() => handleSaveEdit(acc)}
-                                className="px-3.5 py-1.5 rounded-lg bg-[#2196F3] text-white text-xs font-semibold cursor-pointer"
+                                className="px-4 py-1.5 rounded-full liquid-glass-primary text-xs font-bold cursor-pointer"
                               >
                                 {isSaving ? 'Saving...' : 'Save Changes'}
                               </button>
@@ -714,10 +715,10 @@ export const AccountsModal: React.FC = () => {
                   })}
 
                   {/* Workspace Sync Key Footer */}
-                  <div className="rounded-xl p-3.5 bg-[#1B1B1B] border border-white/[0.06] space-y-2.5">
+                  <div className="rounded-2xl p-3.5 liquid-glass-subcard space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <KeyRound className="w-4 h-4 text-[#2196F3] shrink-0" />
+                        <KeyRound className="w-4 h-4 text-neutral-300 shrink-0" />
                         <div className="min-w-0">
                           <span className="text-[11px] font-semibold text-neutral-300 block">
                             Journal Sync Key
@@ -732,12 +733,12 @@ export const AccountsModal: React.FC = () => {
                         <button
                           type="button"
                           onClick={handleCopySyncKey}
-                          className="px-2.5 py-1.5 rounded-lg bg-[#2C2C2C] hover:bg-[#383838] text-xs font-semibold text-neutral-200 flex items-center gap-1 cursor-pointer"
+                          className="px-3 py-1.5 rounded-full liquid-glass-pill text-xs font-semibold text-neutral-200 flex items-center gap-1 cursor-pointer"
                         >
                           {copiedKey ? (
                             <>
-                              <Check className="w-3.5 h-3.5 text-[#2ECC71]" />
-                              <span className="text-[#2ECC71]">Copied</span>
+                              <Check className="w-3.5 h-3.5 text-[#34D399]" />
+                              <span className="text-[#34D399]">Copied</span>
                             </>
                           ) : (
                             <>
@@ -752,7 +753,7 @@ export const AccountsModal: React.FC = () => {
                             setShowSwitchKey(!showSwitchKey);
                             setErrorMsg(null);
                           }}
-                          className="px-2.5 py-1.5 rounded-lg bg-[#2C2C2C] hover:bg-[#383838] text-xs font-semibold text-neutral-200 cursor-pointer"
+                          className="px-3 py-1.5 rounded-full liquid-glass-pill text-xs font-semibold text-neutral-200 cursor-pointer"
                         >
                           {showSwitchKey ? 'Hide' : 'Switch'}
                         </button>
@@ -766,12 +767,12 @@ export const AccountsModal: React.FC = () => {
                           value={switchKeyInput}
                           onChange={(e) => setSwitchKeyInput(e.target.value.toUpperCase())}
                           placeholder="Enter another Sync Key (e.g. TL-...)"
-                          className="flex-1 bg-[#141414] border border-white/15 rounded-lg px-2.5 py-1.5 text-xs font-mono uppercase text-white placeholder-neutral-500 focus:outline-none focus:border-[#2196F3]"
+                          className="flex-1 liquid-glass-input rounded-full px-3 py-1.5 text-xs font-mono uppercase text-white placeholder-neutral-500"
                         />
                         <button
                           type="submit"
                           disabled={isSwitchingKey}
-                          className="px-3 py-1.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] disabled:opacity-60 text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+                          className="px-3.5 py-1.5 rounded-full liquid-glass-primary disabled:opacity-60 text-xs font-bold flex items-center gap-1 cursor-pointer"
                         >
                           {isSwitchingKey && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                           <span>Restore</span>
@@ -779,6 +780,9 @@ export const AccountsModal: React.FC = () => {
                       </form>
                     )}
                   </div>
+
+                  {/* Discreet App Install Option (hidden automatically when already installed) */}
+                  <PWAInstallControl variant="settings" />
                 </div>
               )}
             </div>

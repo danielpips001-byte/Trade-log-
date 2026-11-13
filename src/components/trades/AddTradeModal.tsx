@@ -234,11 +234,11 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="bg-[#262626] border border-white/[0.08] rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl overflow-hidden"
+            className="liquid-glass-surface rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-[#222222]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-white/[0.02]">
               <div>
                 <h2 className="text-base font-bold text-white">Manual Trade Entry</h2>
                 <p className="text-[11px] text-neutral-400">Saves automatically as an Open trade</p>
@@ -248,16 +248,16 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                 disabled={isSubmitting}
                 onClick={() => setIsAddTradeModalOpen(false)}
                 aria-label="Close modal"
-                className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/[0.06] cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+                className="w-9 h-9 rounded-full liquid-glass-pill text-neutral-300 hover:text-white cursor-pointer flex items-center justify-center"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4.5 h-4.5" />
               </button>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSaveTrade} className="p-4 sm:p-5 overflow-y-auto space-y-4">
               {errorMessage && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-medium">
+                <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-200 text-xs font-medium">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMessage}</span>
                 </div>
@@ -272,10 +272,10 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                   <select
                     value={accountId}
                     onChange={(e) => setAccountId(e.target.value)}
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#2196F3]"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-xs text-white cursor-pointer"
                   >
                     {accounts.map(a => (
-                      <option key={a.id} value={a.id}>
+                      <option key={a.id} value={a.id} className="bg-[#18191D] text-white">
                         {a.name} ({a.currency} · {formatMoney(a.currentBalance, a.currency)})
                       </option>
                     ))}
@@ -291,7 +291,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                     required
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-xs font-mono text-white focus:outline-none focus:border-[#2196F3]"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-xs font-mono text-white"
                   />
                 </div>
               </div>
@@ -304,7 +304,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                     <button
                       type="button"
                       onClick={() => setSpecModalSymbol(cleanSymbol)}
-                      className="text-[11px] font-semibold text-[#2196F3] hover:text-blue-300 flex items-center gap-1 cursor-pointer"
+                      className="text-[11px] font-semibold text-neutral-200 hover:text-white liquid-glass-pill px-2.5 py-1 rounded-full flex items-center gap-1 cursor-pointer"
                     >
                       <Sliders className="w-3 h-3" />
                       <span>{hasSpec ? `Edit ${cleanSymbol} Spec` : `Configure ${cleanSymbol}`}</span>
@@ -317,7 +317,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                   onChange={(e) => setSymbol(e.target.value)}
                   placeholder="e.g. XAUUSD, EURUSD, USDJPY, US30"
                   required
-                  className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3.5 py-2.5 text-sm font-mono font-bold text-white uppercase focus:outline-none focus:border-[#2196F3]"
+                  className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-white uppercase"
                 />
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {quickSymbols.map(s => (
@@ -325,10 +325,10 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                       key={s}
                       type="button"
                       onClick={() => setSymbol(s)}
-                      className={`px-2.5 py-1 rounded text-[11px] font-mono font-semibold transition-colors cursor-pointer ${
+                      className={`px-3 py-1 rounded-full text-[11px] font-mono font-semibold transition-colors cursor-pointer ${
                         cleanSymbol === s
-                          ? 'bg-[#2196F3] text-white'
-                          : 'bg-[#1C1C1C] text-neutral-400 hover:text-white border border-white/[0.06]'
+                          ? 'liquid-glass-primary'
+                          : 'liquid-glass-pill text-neutral-300 hover:text-white'
                       }`}
                     >
                       {s}
@@ -343,13 +343,13 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                   <label className="block text-xs font-semibold text-neutral-300 mb-1.5">
                     Direction
                   </label>
-                  <div className="grid grid-cols-2 gap-1.5 bg-[#1C1C1C] p-1 rounded-lg border border-white/10">
+                  <div className="grid grid-cols-2 gap-1 liquid-glass-subcard p-1 rounded-full">
                     <button
                       type="button"
                       onClick={() => setDirection('BUY')}
-                      className={`py-2 rounded text-xs font-bold transition-colors cursor-pointer ${
+                      className={`py-2 rounded-full text-xs font-bold transition-colors cursor-pointer ${
                         direction === 'BUY'
-                          ? 'bg-[#2ECC71] text-neutral-950'
+                          ? 'bg-[#34D399] text-neutral-950 shadow-sm'
                           : 'text-neutral-400 hover:text-white'
                       }`}
                     >
@@ -358,9 +358,9 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                     <button
                       type="button"
                       onClick={() => setDirection('SELL')}
-                      className={`py-2 rounded text-xs font-bold transition-colors cursor-pointer ${
+                      className={`py-2 rounded-full text-xs font-bold transition-colors cursor-pointer ${
                         direction === 'SELL'
-                          ? 'bg-[#EF4444] text-white'
+                          ? 'bg-[#F87171] text-neutral-950 shadow-sm'
                           : 'text-neutral-400 hover:text-white'
                       }`}
                     >
@@ -380,7 +380,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                     onChange={(e) => setLotSize(e.target.value)}
                     placeholder="1.0"
                     required
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3.5 py-2.5 text-sm font-mono font-bold text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-white tabular-nums"
                   />
                 </div>
               </div>
@@ -398,7 +398,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                     onChange={(e) => setEntryPrice(e.target.value)}
                     placeholder="0.00"
                     required
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-xs font-mono font-bold text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
+                    className="w-full liquid-glass-input rounded-2xl px-3 py-2.5 text-xs font-mono font-bold text-white tabular-nums"
                   />
                 </div>
                 <div>
@@ -411,7 +411,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                     value={stopLoss}
                     onChange={(e) => setStopLoss(e.target.value)}
                     placeholder="Optional"
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-xs font-mono font-bold text-red-300 tabular-nums focus:outline-none focus:border-[#2196F3]"
+                    className="w-full liquid-glass-input rounded-2xl px-3 py-2.5 text-xs font-mono font-bold text-red-300 tabular-nums"
                   />
                 </div>
                 <div>
@@ -424,14 +424,14 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                     value={takeProfit}
                     onChange={(e) => setTakeProfit(e.target.value)}
                     placeholder="Optional"
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2.5 text-xs font-mono font-bold text-emerald-300 tabular-nums focus:outline-none focus:border-[#2196F3]"
+                    className="w-full liquid-glass-input rounded-2xl px-3 py-2.5 text-xs font-mono font-bold text-emerald-300 tabular-nums"
                   />
                 </div>
               </div>
 
               {/* Missing Instrument Spec Prompt */}
               {calculations.status === 'missing_spec' && calculations.missingSpecSymbol && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 space-y-2.5">
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 space-y-2.5">
                   <div className="flex items-start gap-2 text-amber-200 text-xs">
                     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
                     <div>
@@ -444,7 +444,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                   <button
                     type="button"
                     onClick={() => setSpecModalSymbol(calculations.missingSpecSymbol!)}
-                    className="px-3.5 py-2 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 rounded-full liquid-glass-primary text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     <Sliders className="w-3.5 h-3.5" />
                     <span>Configure {calculations.missingSpecSymbol} Spec</span>
@@ -454,7 +454,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
 
               {/* Missing Currency Conversion Prompt */}
               {calculations.status === 'missing_conversion' && calculations.missingConversion && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 space-y-2.5">
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 space-y-2.5">
                   <div className="flex items-start gap-2 text-amber-200 text-xs">
                     <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
                     <div>
@@ -476,7 +476,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                       value={quickRateInput}
                       onChange={(e) => setQuickRateInput(e.target.value)}
                       placeholder="Rate"
-                      className="flex-1 bg-[#1C1C1C] border border-white/15 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white"
+                      className="flex-1 liquid-glass-input rounded-xl px-2.5 py-1.5 text-xs font-mono text-white"
                     />
                     <span className="text-xs font-mono text-white shrink-0">
                       {missingPairParts[1]}
@@ -485,7 +485,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                       type="button"
                       disabled={savingRate}
                       onClick={handleSaveQuickRate}
-                      className="px-3 py-1.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold cursor-pointer shrink-0"
+                      className="px-3.5 py-1.5 rounded-full liquid-glass-primary text-xs font-bold cursor-pointer shrink-0"
                     >
                       {savingRate ? 'Saving...' : 'Save Rate'}
                     </button>
@@ -495,9 +495,9 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
 
               {/* Invalid Price Placement Notice (No fake R:R shown) */}
               {calculations.status === 'invalid_prices' && calculations.errors.length > 0 && (
-                <div className="bg-red-500/15 border border-red-500/30 rounded-xl p-3.5 space-y-1">
+                <div className="bg-red-500/15 border border-red-500/30 rounded-2xl p-3.5 space-y-1">
                   {calculations.errors.map((err, i) => (
-                    <div key={i} className="flex items-center gap-2 text-red-300 text-xs font-medium">
+                    <div key={i} className="flex items-center gap-2 text-red-200 text-xs font-medium">
                       <AlertCircle className="w-4 h-4 shrink-0" />
                       <span>{err}</span>
                     </div>
@@ -507,40 +507,40 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
 
               {/* Live Accurate Calculations */}
               {calculations.status === 'ok' && (calculations.estimatedRisk !== null || calculations.estimatedProfit !== null) && (
-                <div className="bg-[#1C1C1C] border border-white/[0.08] rounded-xl p-3.5 space-y-2.5">
+                <div className="liquid-glass-subcard rounded-2xl p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between text-[11px] text-neutral-400">
                     <span className="flex items-center gap-1.5 font-semibold text-neutral-300">
-                      <Calculator className="w-3.5 h-3.5 text-[#2196F3]" />
+                      <Calculator className="w-3.5 h-3.5 text-white" />
                       <span>Risk &amp; Reward Projection</span>
                     </span>
-                    <span className="font-mono font-bold text-[#2196F3]">
+                    <span className="font-mono font-bold text-white">
                       Risk-to-Reward: {calculations.riskReward ? formatRiskReward(calculations.riskReward) : '—'}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2.5">
-                    <div className="bg-[#242424] rounded-lg p-2.5">
+                    <div className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-2.5">
                       <div className="flex items-center gap-1 text-[10px] text-neutral-400">
-                        <ShieldAlert className="w-3 h-3 text-[#EF4444]" />
+                        <ShieldAlert className="w-3 h-3 text-[#F87171]" />
                         <span>
                           Risk ({calculations.slPips} {calculations.unitLabel})
                         </span>
                       </div>
-                      <span className="text-sm font-bold font-mono text-[#EF4444] tabular-nums block mt-0.5">
+                      <span className="text-sm font-bold font-mono text-[#F87171] tabular-nums block mt-0.5">
                         {calculations.estimatedRisk !== null
                           ? formatMoney(calculations.estimatedRisk, accountCurrency)
                           : '—'}
                       </span>
                     </div>
 
-                    <div className="bg-[#242424] rounded-lg p-2.5">
+                    <div className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-2.5">
                       <div className="flex items-center gap-1 text-[10px] text-neutral-400">
-                        <Target className="w-3 h-3 text-[#2ECC71]" />
+                        <Target className="w-3 h-3 text-[#34D399]" />
                         <span>
                           Potential Profit ({calculations.tpPips} {calculations.unitLabel})
                         </span>
                       </div>
-                      <span className="text-sm font-bold font-mono text-[#2ECC71] tabular-nums block mt-0.5">
+                      <span className="text-sm font-bold font-mono text-[#34D399] tabular-nums block mt-0.5">
                         {calculations.estimatedProfit !== null
                           ? formatMoney(calculations.estimatedProfit, accountCurrency)
                           : '—'}
@@ -566,7 +566,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                   onChange={(e) => setNotes(e.target.value)}
                   rows={2}
                   placeholder="Setup reason, timeframe, execution thoughts..."
-                  className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3.5 py-2 text-xs text-white placeholder-neutral-500 resize-none focus:outline-none focus:border-[#2196F3]"
+                  className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 resize-none"
                 />
               </div>
 
@@ -576,14 +576,14 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({ onSavedSuccess }) 
                   type="button"
                   disabled={isSubmitting}
                   onClick={() => setIsAddTradeModalOpen(false)}
-                  className="px-4 py-2.5 rounded-lg bg-[#333333] hover:bg-[#404040] text-neutral-200 text-xs font-semibold cursor-pointer min-h-[44px]"
+                  className="px-4 py-2.5 rounded-full liquid-glass-pill text-neutral-200 text-xs font-semibold cursor-pointer min-h-[44px]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] disabled:opacity-60 text-white text-xs font-bold flex items-center gap-2 cursor-pointer min-h-[44px] shadow-md"
+                  className="px-6 py-2.5 rounded-full liquid-glass-primary disabled:opacity-60 text-xs font-bold flex items-center gap-2 cursor-pointer min-h-[44px]"
                 >
                   {isSubmitting ? (
                     <>

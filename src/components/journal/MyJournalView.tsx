@@ -190,7 +190,7 @@ export const MyJournalView: React.FC = () => {
   }, [filteredTrades, selectedCalendarDate]);
 
   return (
-    <div className="max-w-4xl mx-auto px-3.5 py-4 pb-28 space-y-3 relative min-h-[calc(100vh-120px)]">
+    <div className="max-w-4xl mx-auto px-3.5 py-4 pb-32 space-y-3 relative min-h-[calc(100vh-120px)]">
       {/* Search Bar (when toggled by Search FAB) */}
       <AnimatePresence>
         {isSearchOpen && (
@@ -198,7 +198,7 @@ export const MyJournalView: React.FC = () => {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="flex items-center gap-2 bg-[#262626] border border-white/[0.08] rounded-xl px-3.5 py-2 shadow-md"
+            className="flex items-center gap-2.5 liquid-glass-card rounded-full px-4 py-2.5"
           >
             <Search className="w-4 h-4 text-neutral-400 shrink-0" />
             <input
@@ -213,7 +213,7 @@ export const MyJournalView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="p-1 text-neutral-400 hover:text-white cursor-pointer"
+                className="p-1 text-neutral-400 hover:text-white cursor-pointer rounded-full"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -224,14 +224,14 @@ export const MyJournalView: React.FC = () => {
 
       {/* Active Filter Banner */}
       {statusFilter !== 'all' && (
-        <div className="flex items-center justify-between bg-[#262626] border border-[#2196F3]/40 rounded-xl px-3.5 py-2 text-xs">
+        <div className="flex items-center justify-between liquid-glass-card rounded-full px-4 py-2 text-xs">
           <span className="text-neutral-200 font-medium">
-            Filter: <strong className="text-[#2196F3] uppercase">{statusFilter}</strong> ({visibleTrades.length})
+            Filter: <strong className="text-white uppercase">{statusFilter}</strong> ({visibleTrades.length})
           </span>
           <button
             type="button"
             onClick={() => setStatusFilter('all')}
-            className="text-neutral-400 hover:text-white font-semibold cursor-pointer"
+            className="text-neutral-300 hover:text-white font-semibold cursor-pointer px-2 py-0.5 rounded-full hover:bg-white/10"
           >
             Clear
           </button>
@@ -257,21 +257,21 @@ export const MyJournalView: React.FC = () => {
               return (
                 <div
                   key={week.key}
-                  className="bg-[#262626] rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04] overflow-hidden"
+                  className="liquid-glass-card rounded-2xl overflow-hidden"
                 >
-                  {/* Week Header Row (exact layout from IMG_3531) */}
+                  {/* Week Header Row */}
                   <button
                     type="button"
                     onClick={() => toggleWeek(week.key)}
-                    className="w-full px-4 py-4 flex items-center justify-between gap-3 text-left hover:bg-white/[0.03] transition-colors cursor-pointer min-h-[56px]"
+                    className="w-full px-4 py-4 flex items-center justify-between gap-3 text-left hover:bg-white/[0.04] transition-colors cursor-pointer min-h-[56px]"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span className="text-[15px] font-bold text-white tracking-tight truncate">
                         {week.label}
                       </span>
                       <span
-                        className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                          week.hasOpen ? 'bg-[#2196F3]' : 'bg-[#F59E0B]'
+                        className={`w-2 h-2 rounded-full shrink-0 ${
+                          week.hasOpen ? 'bg-white' : 'bg-neutral-400/70'
                         }`}
                         title={week.hasOpen ? 'Contains open trades' : 'All trades settled'}
                       />
@@ -282,9 +282,9 @@ export const MyJournalView: React.FC = () => {
                         <span
                           className={`text-[14px] font-bold font-mono tabular-nums ${
                             week.pctReturn > 0
-                              ? 'text-[#2ECC71]'
+                              ? 'text-[#34D399]'
                               : week.pctReturn < 0
-                              ? 'text-[#EF4444]'
+                              ? 'text-[#F87171]'
                               : 'text-neutral-300'
                           }`}
                         >
@@ -307,7 +307,7 @@ export const MyJournalView: React.FC = () => {
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="border-t border-white/[0.06] bg-[#1F1F1F] divide-y divide-white/[0.05]"
+                        className="border-t border-white/[0.08] bg-black/25 divide-y divide-white/[0.06]"
                       >
                         {week.trades.map((trade) => {
                           const isOpen = trade.status === 'Open';
@@ -319,27 +319,27 @@ export const MyJournalView: React.FC = () => {
                             <div
                               key={trade.id}
                               onClick={() => setSelectedTradeId(trade.id)}
-                              className="px-4 py-3.5 flex items-center justify-between gap-3 hover:bg-white/[0.04] transition-colors cursor-pointer"
+                              className="px-4 py-3.5 flex items-center justify-between gap-3 hover:bg-white/[0.05] transition-colors cursor-pointer"
                             >
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-bold text-white">{trade.asset}</span>
                                   <span
-                                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                                       trade.direction === 'BUY'
-                                        ? 'bg-[#2ECC71]/15 text-[#2ECC71]'
-                                        : 'bg-[#EF4444]/15 text-[#EF4444]'
+                                        ? 'bg-emerald-500/15 text-[#34D399]'
+                                        : 'bg-red-500/15 text-[#F87171]'
                                     }`}
                                   >
                                     {trade.direction}
                                   </span>
                                   {isOpen && (
-                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#2196F3]/20 text-[#2196F3]">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/12 text-white border border-white/15">
                                       OPEN
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[11px] text-neutral-400 font-mono mt-0.5 flex flex-wrap items-center gap-1.5">
+                                <div className="text-[11px] text-neutral-400 font-mono mt-1 flex flex-wrap items-center gap-1.5">
                                   <span>{trade.date}</span>
                                   <span>·</span>
                                   <span>{trade.lotSize} lots</span>
@@ -364,7 +364,7 @@ export const MyJournalView: React.FC = () => {
                                       e.stopPropagation();
                                       setTradeToClose(trade);
                                     }}
-                                    className="px-3 py-1.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold flex items-center gap-1 cursor-pointer min-h-[34px]"
+                                    className="px-3.5 py-1.5 rounded-full liquid-glass-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[34px]"
                                   >
                                     <CheckCircle className="w-3.5 h-3.5" />
                                     <span>Close</span>
@@ -374,9 +374,9 @@ export const MyJournalView: React.FC = () => {
                                     <span
                                       className={`text-sm font-bold font-mono tabular-nums block ${
                                         trade.realizedPnl > 0
-                                          ? 'text-[#2ECC71]'
+                                          ? 'text-[#34D399]'
                                           : trade.realizedPnl < 0
-                                          ? 'text-[#EF4444]'
+                                          ? 'text-[#F87171]'
                                           : 'text-neutral-300'
                                       }`}
                                     >
@@ -398,7 +398,7 @@ export const MyJournalView: React.FC = () => {
               );
             })
           ) : (
-            <div className="bg-[#262626] rounded-xl p-8 text-center border border-white/[0.06] space-y-3">
+            <div className="liquid-glass-card rounded-3xl p-8 text-center space-y-3.5">
               {filteredTrades.length === 0 ? (
                 <>
                   <p className="text-base font-bold text-white">
@@ -416,7 +416,7 @@ export const MyJournalView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsAddTradeModalOpen(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold cursor-pointer min-h-[42px]"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full liquid-glass-primary text-xs font-bold cursor-pointer min-h-[42px]"
               >
                 <Plus className="w-4 h-4" />
                 <span>Log First Trade</span>
@@ -426,27 +426,27 @@ export const MyJournalView: React.FC = () => {
         </div>
       )}
 
-      {/* VIEW MODE B: MONTHLY CALENDAR VIEW (Toggled by top-left Calendar icon) */}
+      {/* VIEW MODE B: MONTHLY CALENDAR VIEW */}
       {journalViewMode === 'calendar' && (
         <div className="space-y-3">
           {/* Calendar Header */}
-          <div className="bg-[#262626] rounded-xl p-4 border border-white/[0.06] shadow-md">
+          <div className="liquid-glass-card rounded-3xl p-4">
             <div className="flex items-center justify-between mb-4">
               <button
                 type="button"
                 onClick={() => setViewMonth(new Date(year, month - 1, 1))}
-                className="p-2 rounded-lg bg-[#1C1C1C] hover:bg-[#333333] text-white cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+                className="w-10 h-10 rounded-full liquid-glass-pill text-white cursor-pointer flex items-center justify-center"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4 text-[#2196F3]" />
+                <CalendarIcon className="w-4 h-4 text-neutral-300" />
                 <span>{monthName}</span>
               </h2>
               <button
                 type="button"
                 onClick={() => setViewMonth(new Date(year, month + 1, 1))}
-                className="p-2 rounded-lg bg-[#1C1C1C] hover:bg-[#333333] text-white cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+                className="w-10 h-10 rounded-full liquid-glass-pill text-white cursor-pointer flex items-center justify-center"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -462,7 +462,7 @@ export const MyJournalView: React.FC = () => {
             {/* Days grid */}
             <div className="grid grid-cols-7 gap-1.5">
               {Array.from({ length: firstDayOffset }).map((_, i) => (
-                <div key={`empty-${i}`} className="h-14 rounded-lg bg-[#1E1E1E]/40" />
+                <div key={`empty-${i}`} className="h-14 rounded-xl bg-white/[0.02]" />
               ))}
               {Array.from({ length: daysInMonth }).map((_, idx) => {
                 const dayNum = idx + 1;
@@ -471,14 +471,14 @@ export const MyJournalView: React.FC = () => {
                 const isSelected = selectedCalendarDate === dateStr;
                 const pct = stat ? stat.netPct : 0;
 
-                let cellBg = 'bg-[#1D1D1D] border-white/[0.04] text-neutral-300';
+                let cellBg = 'bg-white/[0.04] border-white/[0.06] text-neutral-300';
                 if (stat) {
                   if (pct > 0.0001) {
-                    cellBg = 'bg-[#2ECC71]/15 border-[#2ECC71]/40 text-white';
+                    cellBg = 'bg-emerald-500/15 border-emerald-400/35 text-white';
                   } else if (pct < -0.0001) {
-                    cellBg = 'bg-[#EF4444]/15 border-[#EF4444]/40 text-white';
+                    cellBg = 'bg-red-500/15 border-red-400/35 text-white';
                   } else {
-                    cellBg = 'bg-[#2A2A2A] border-white/10 text-white';
+                    cellBg = 'bg-white/[0.1] border-white/[0.18] text-white';
                   }
                 }
 
@@ -487,18 +487,18 @@ export const MyJournalView: React.FC = () => {
                     key={dateStr}
                     type="button"
                     onClick={() => setSelectedCalendarDate(dateStr)}
-                    className={`h-14 rounded-lg border p-1 flex flex-col items-center justify-between transition-all cursor-pointer relative ${cellBg} ${
-                      isSelected ? 'ring-2 ring-[#2196F3]' : ''
+                    className={`h-14 rounded-xl border p-1.5 flex flex-col items-center justify-between transition-all cursor-pointer relative ${cellBg} ${
+                      isSelected ? 'ring-2 ring-white/85 bg-white/[0.12]' : ''
                     }`}
                   >
                     <span className="text-[11px] font-bold self-start leading-none">{dayNum}</span>
                     {stat?.hasOpen && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#2196F3] absolute top-1.5 right-1.5" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-white absolute top-1.5 right-1.5" />
                     )}
                     {stat && Math.abs(pct) > 0.0001 && (
                       <span
                         className={`text-[10px] font-mono font-bold tabular-nums leading-none ${
-                          pct > 0 ? 'text-[#2ECC71]' : 'text-[#EF4444]'
+                          pct > 0 ? 'text-[#34D399]' : 'text-[#F87171]'
                         }`}
                       >
                         {pct >= 0 ? '+' : ''}{pct.toFixed(1)}%
@@ -511,8 +511,8 @@ export const MyJournalView: React.FC = () => {
           </div>
 
           {/* Selected Day Trades */}
-          <div className="bg-[#262626] rounded-xl border border-white/[0.06] overflow-hidden">
-            <div className="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between">
+          <div className="liquid-glass-card rounded-2xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-white/[0.08] flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-bold text-white font-mono">{selectedCalendarDate}</h3>
                 <span className="text-[11px] text-neutral-400">
@@ -522,7 +522,7 @@ export const MyJournalView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsAddTradeModalOpen(true)}
-                className="px-3 py-1.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-full liquid-glass-primary text-xs font-bold flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Trade</span>
@@ -530,7 +530,7 @@ export const MyJournalView: React.FC = () => {
             </div>
 
             {selectedDayTrades.length > 0 ? (
-              <div className="divide-y divide-white/[0.05]">
+              <div className="divide-y divide-white/[0.06]">
                 {selectedDayTrades.map((trade) => {
                   const isOpen = trade.status === 'Open';
                   const curr = getTradeCurrency(trade);
@@ -538,18 +538,18 @@ export const MyJournalView: React.FC = () => {
                     <div
                       key={trade.id}
                       onClick={() => setSelectedTradeId(trade.id)}
-                      className="px-4 py-3 flex items-center justify-between hover:bg-white/[0.04] cursor-pointer"
+                      className="px-4 py-3 flex items-center justify-between hover:bg-white/[0.05] cursor-pointer"
                     >
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-bold text-white">{trade.asset}</span>
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                            trade.direction === 'BUY' ? 'bg-[#2ECC71]/15 text-[#2ECC71]' : 'bg-[#EF4444]/15 text-[#EF4444]'
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            trade.direction === 'BUY' ? 'bg-emerald-500/15 text-[#34D399]' : 'bg-red-500/15 text-[#F87171]'
                           }`}>
                             {trade.direction}
                           </span>
                           {isOpen && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#2196F3]/20 text-[#2196F3]">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/12 text-white border border-white/15">
                               OPEN
                             </span>
                           )}
@@ -566,13 +566,13 @@ export const MyJournalView: React.FC = () => {
                             e.stopPropagation();
                             setTradeToClose(trade);
                           }}
-                          className="px-3 py-1.5 rounded-lg bg-[#2196F3] text-white text-xs font-bold cursor-pointer"
+                          className="px-3.5 py-1.5 rounded-full liquid-glass-primary text-xs font-bold cursor-pointer"
                         >
                           Close
                         </button>
                       ) : (
                         <span className={`text-sm font-bold font-mono tabular-nums ${
-                          trade.realizedPnl >= 0 ? 'text-[#2ECC71]' : 'text-[#EF4444]'
+                          trade.realizedPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'
                         }`}>
                           {formatMoney(trade.realizedPnl, curr, true)}
                         </span>
@@ -597,7 +597,7 @@ export const MyJournalView: React.FC = () => {
             initial={{ opacity: 0, scale: 0.94, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 8 }}
-            className="fixed bottom-48 right-18 z-40 bg-[#222222] border border-white/10 rounded-xl shadow-2xl p-2 w-44 space-y-1"
+            className="fixed bottom-52 right-18 z-40 liquid-glass-popover rounded-2xl p-2 w-44 space-y-1"
           >
             {(['all', 'open', 'wins', 'losses', 'breakeven'] as const).map((f) => (
               <button
@@ -607,10 +607,10 @@ export const MyJournalView: React.FC = () => {
                   setStatusFilter(f);
                   setIsFilterOpen(false);
                 }}
-                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold capitalize cursor-pointer transition-colors ${
+                className={`w-full text-left px-3.5 py-2 rounded-full text-xs font-semibold capitalize cursor-pointer transition-colors ${
                   statusFilter === f
-                    ? 'bg-[#2196F3] text-white'
-                    : 'text-neutral-200 hover:bg-white/[0.06]'
+                    ? 'liquid-glass-primary'
+                    : 'text-neutral-200 hover:bg-white/[0.08]'
                 }`}
               >
                 {f === 'all' ? 'All Trades' : f}
@@ -620,7 +620,7 @@ export const MyJournalView: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Plus FAB Popup Card (Exact reference style from IMG_3531!) */}
+      {/* Plus FAB Popup Card */}
       <AnimatePresence>
         {isPlusMenuOpen && (
           <>
@@ -633,7 +633,7 @@ export const MyJournalView: React.FC = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: 10 }}
               transition={{ type: 'spring', stiffness: 450, damping: 28 }}
-              className="fixed bottom-24 right-20 z-40 bg-[#222222] border border-white/[0.08] rounded-lg shadow-[0_12px_32px_rgba(0,0,0,0.65)] py-2 w-60"
+              className="fixed bottom-28 right-20 z-40 liquid-glass-popover rounded-2xl py-2 w-60 overflow-hidden"
             >
               <button
                 type="button"
@@ -641,7 +641,7 @@ export const MyJournalView: React.FC = () => {
                   setIsPlusMenuOpen(false);
                   setIsAddTradeModalOpen(true);
                 }}
-                className="w-full text-left px-5 py-3.5 text-sm font-bold text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                className="w-full text-left px-5 py-3.5 text-sm font-bold text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
               >
                 Manual Trade Entry
               </button>
@@ -651,7 +651,7 @@ export const MyJournalView: React.FC = () => {
                   setIsPlusMenuOpen(false);
                   setJournalViewMode(journalViewMode === 'weekly' ? 'calendar' : 'weekly');
                 }}
-                className="w-full text-left px-5 py-3.5 text-sm font-bold text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                className="w-full text-left px-5 py-3.5 text-sm font-bold text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
               >
                 {journalViewMode === 'weekly' ? 'Monthly Calendar View' : 'Weekly Accordions View'}
               </button>
@@ -661,17 +661,17 @@ export const MyJournalView: React.FC = () => {
                   setIsPlusMenuOpen(false);
                   setActiveTab('tools');
                 }}
-                className="w-full text-left px-5 py-3.5 text-sm font-bold text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                className="w-full text-left px-5 py-3.5 text-sm font-bold text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
               >
-                Rules & Journal Tools
+                Rules &amp; Journal Tools
               </button>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* Floating Action Stack (Exact bottom-right layout from IMG_3531) */}
-      <div className="fixed bottom-20 right-4 z-40 flex flex-col items-center gap-3">
+      {/* Floating Action Stack */}
+      <div className="fixed bottom-24 right-4 z-40 flex flex-col items-center gap-3">
         <motion.button
           type="button"
           whileTap={{ scale: 0.9 }}
@@ -681,8 +681,8 @@ export const MyJournalView: React.FC = () => {
             setIsPlusMenuOpen(false);
           }}
           aria-label="Search trades"
-          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.45)] transition-colors cursor-pointer ${
-            isSearchOpen ? 'bg-[#2196F3] text-white' : 'bg-[#6E6E6E] hover:bg-[#7D7D7D] text-white'
+          className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+            isSearchOpen ? 'liquid-glass-primary' : 'liquid-glass-bar text-white hover:bg-white/15'
           }`}
         >
           <Search className="w-5 h-5" />
@@ -696,8 +696,8 @@ export const MyJournalView: React.FC = () => {
             setIsPlusMenuOpen(false);
           }}
           aria-label="Filter trades"
-          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-[0_4px_14px_rgba(0,0,0,0.45)] transition-colors cursor-pointer ${
-            isFilterOpen || statusFilter !== 'all' ? 'bg-[#2196F3] text-white' : 'bg-[#6E6E6E] hover:bg-[#7D7D7D] text-white'
+          className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+            isFilterOpen || statusFilter !== 'all' ? 'liquid-glass-primary' : 'liquid-glass-bar text-white hover:bg-white/15'
           }`}
         >
           <ListFilter className="w-5 h-5" />
@@ -711,7 +711,7 @@ export const MyJournalView: React.FC = () => {
             setIsFilterOpen(false);
           }}
           aria-label="Add trade menu"
-          className="w-13 h-13 rounded-full bg-[#2196F3] hover:bg-[#1E88E5] text-white flex items-center justify-center shadow-[0_6px_20px_rgba(33,150,243,0.45)] cursor-pointer"
+          className="w-13 h-13 rounded-full liquid-glass-primary flex items-center justify-center cursor-pointer"
         >
           <Plus className={`w-6 h-6 transition-transform duration-200 ${isPlusMenuOpen ? 'rotate-45' : ''}`} />
         </motion.button>

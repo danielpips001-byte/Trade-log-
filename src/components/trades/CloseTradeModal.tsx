@@ -155,10 +155,10 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        className="bg-[#262626] border border-white/[0.08] rounded-t-2xl sm:rounded-2xl w-full max-w-md shadow-2xl overflow-hidden max-h-[92vh] flex flex-col"
+        className="liquid-glass-surface rounded-t-3xl sm:rounded-3xl w-full max-w-md overflow-hidden max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-[#222222]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-white/[0.02]">
           <div>
             <h3 className="text-base font-bold text-white">Close Trade</h3>
             <span className="text-xs text-neutral-400 font-mono">
@@ -170,15 +170,15 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
             disabled={isClosing}
             onClick={onClose}
             aria-label="Close modal"
-            className="p-2 rounded-lg text-neutral-400 hover:text-white cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+            className="w-9 h-9 rounded-full liquid-glass-pill text-neutral-300 hover:text-white cursor-pointer flex items-center justify-center"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4.5 h-4.5" />
           </button>
         </div>
 
         <form onSubmit={handleConfirm} className="p-5 overflow-y-auto space-y-4">
           {errorMsg && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-medium">
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-200 text-xs font-medium">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
@@ -195,16 +195,14 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
                     key={opt}
                     type="button"
                     onClick={() => setOutcome(opt)}
-                    className={`px-3 py-2.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                    className={`px-3 py-2.5 rounded-full text-xs font-semibold border transition-colors cursor-pointer ${
                       isSelected
                         ? opt === 'Take Profit Hit'
-                          ? 'bg-[#2ECC71] text-neutral-950 border-[#2ECC71]'
+                          ? 'bg-[#34D399] text-neutral-950 border-[#34D399]'
                           : opt === 'Stop Loss Hit'
-                          ? 'bg-[#EF4444] text-white border-[#EF4444]'
-                          : opt === 'Breakeven'
-                          ? 'bg-neutral-200 text-neutral-950 border-neutral-200'
-                          : 'bg-[#2196F3] text-white border-[#2196F3]'
-                        : 'bg-[#1C1C1C] text-neutral-300 border-white/10 hover:border-white/25'
+                          ? 'bg-[#F87171] text-neutral-950 border-[#F87171]'
+                          : 'liquid-glass-primary'
+                        : 'liquid-glass-pill text-neutral-300 hover:text-white'
                     }`}
                   >
                     {opt}
@@ -216,7 +214,7 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
 
           {/* Missing Spec or Conversion Prompts */}
           {pnlCalc.status === 'missing_spec' && pnlCalc.missingSpecSymbol && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 space-y-2">
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 space-y-2">
               <div className="flex items-start gap-2 text-amber-200 text-xs">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
                 <span>No specification saved for {pnlCalc.missingSpecSymbol}. Configure it for automatic P/L calculation, or enter realized P/L manually below.</span>
@@ -224,7 +222,7 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
               <button
                 type="button"
                 onClick={() => setSpecModalSymbol(pnlCalc.missingSpecSymbol!)}
-                className="px-3 py-1.5 rounded-lg bg-[#2196F3] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-full liquid-glass-primary text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Sliders className="w-3.5 h-3.5" />
                 <span>Configure {pnlCalc.missingSpecSymbol}</span>
@@ -233,7 +231,7 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
           )}
 
           {pnlCalc.status === 'missing_conversion' && pnlCalc.missingConversion && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 space-y-2">
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3 space-y-2">
               <div className="flex items-start gap-2 text-amber-200 text-xs">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
                 <span>
@@ -250,14 +248,14 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
                   value={quickRateInput}
                   onChange={(e) => setQuickRateInput(e.target.value)}
                   placeholder="Rate"
-                  className="flex-1 bg-[#1C1C1C] border border-white/15 rounded-lg px-2.5 py-1.5 text-xs font-mono text-white"
+                  className="flex-1 liquid-glass-input rounded-xl px-2.5 py-1.5 text-xs font-mono text-white"
                 />
                 <span className="text-xs font-mono text-white shrink-0">{missingPairParts[1]}</span>
                 <button
                   type="button"
                   disabled={savingRate}
                   onClick={handleSaveQuickRate}
-                  className="px-3 py-1.5 rounded-lg bg-[#2196F3] text-white text-xs font-bold cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-full liquid-glass-primary text-xs font-bold cursor-pointer"
                 >
                   {savingRate ? '...' : 'Save'}
                 </button>
@@ -278,7 +276,7 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
                   setManualNetPnl(null);
                 }}
                 required
-                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3.5 py-2.5 text-sm font-mono font-bold text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
+                className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold text-white tabular-nums"
               />
             </div>
 
@@ -292,12 +290,12 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
                 value={effectiveNetPnlStr}
                 onChange={(e) => setManualNetPnl(e.target.value)}
                 required
-                className={`w-full bg-[#1C1C1C] border rounded-lg px-3.5 py-2.5 text-sm font-mono font-bold tabular-nums focus:outline-none ${
+                className={`w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-sm font-mono font-bold tabular-nums ${
                   pnlNum > 0
-                    ? 'border-[#2ECC71]/60 text-[#2ECC71]'
+                    ? '!border-[#34D399]/60 text-[#34D399]'
                     : pnlNum < 0
-                    ? 'border-[#EF4444]/60 text-[#EF4444]'
-                    : 'border-white/10 text-white'
+                    ? '!border-[#F87171]/60 text-[#F87171]'
+                    : 'text-white'
                 }`}
               />
             </div>
@@ -319,7 +317,7 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
                   setManualNetPnl(null);
                 }}
                 placeholder="0.00"
-                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
+                className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs font-mono text-white tabular-nums"
               />
             </div>
             <div>
@@ -335,17 +333,17 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
                   setManualNetPnl(null);
                 }}
                 placeholder="0.00"
-                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
+                className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs font-mono text-white tabular-nums"
               />
             </div>
           </div>
 
           {/* Breakdown Preview */}
           {pnlCalc.status === 'ok' && (
-            <div className="bg-[#1C1C1C] border border-white/[0.06] rounded-lg px-3 py-2.5 space-y-1 text-[11px] font-mono">
+            <div className="liquid-glass-subcard rounded-2xl px-3.5 py-2.5 space-y-1 text-[11px] font-mono">
               <div className="flex justify-between text-neutral-400">
                 <span>Gross Price P/L</span>
-                <span className={pnlCalc.grossPnl >= 0 ? 'text-[#2ECC71]' : 'text-[#EF4444]'}>
+                <span className={pnlCalc.grossPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'}>
                   {formatMoney(pnlCalc.grossPnl, accountCurrency, true)}
                 </span>
               </div>
@@ -371,7 +369,7 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
                 value={closedDate}
                 onChange={(e) => setClosedDate(e.target.value)}
                 required
-                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#2196F3]"
+                className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs font-mono text-white"
               />
             </div>
             <div>
@@ -380,7 +378,7 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
                 type="time"
                 value={closedAt}
                 onChange={(e) => setClosedAt(e.target.value)}
-                className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-[#2196F3]"
+                className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs font-mono text-white"
               />
             </div>
           </div>
@@ -393,16 +391,16 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
               placeholder="Reflections on exit timing..."
-              className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3.5 py-2 text-xs text-white placeholder-neutral-500 resize-none focus:outline-none focus:border-[#2196F3]"
+              className="w-full liquid-glass-input rounded-2xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 resize-none"
             />
           </div>
 
           {/* Account Balance Settlement Preview */}
-          <div className="bg-[#1C1C1C] border border-white/[0.08] rounded-lg p-3 flex items-center justify-between text-xs">
+          <div className="liquid-glass-subcard rounded-2xl p-3.5 flex items-center justify-between text-xs">
             <span className="text-neutral-400">Net Account Settlement</span>
             <span
               className={`font-mono font-bold tabular-nums ${
-                pnlNum > 0 ? 'text-[#2ECC71]' : pnlNum < 0 ? 'text-[#EF4444]' : 'text-neutral-300'
+                pnlNum > 0 ? 'text-[#34D399]' : pnlNum < 0 ? 'text-[#F87171]' : 'text-neutral-300'
               }`}
             >
               {formatMoney(pnlNum, accountCurrency, true)}
@@ -414,14 +412,14 @@ export const CloseTradeModal: React.FC<Props> = ({ trade, onClose, onClosedSucce
               type="button"
               disabled={isClosing}
               onClick={onClose}
-              className="px-4 py-2.5 rounded-lg bg-[#333333] hover:bg-[#404040] text-neutral-200 text-xs font-semibold cursor-pointer min-h-[44px]"
+              className="px-4 py-2.5 rounded-full liquid-glass-pill text-neutral-200 text-xs font-semibold cursor-pointer min-h-[44px]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isClosing}
-              className="px-5 py-2.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold flex items-center gap-2 cursor-pointer min-h-[44px]"
+              className="px-5 py-2.5 rounded-full liquid-glass-primary text-xs font-bold flex items-center gap-2 cursor-pointer min-h-[44px]"
             >
               {isClosing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               <span>Confirm Close</span>

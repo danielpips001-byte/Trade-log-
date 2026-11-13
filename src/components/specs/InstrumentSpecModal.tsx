@@ -205,25 +205,27 @@ export const InstrumentSpecModal: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="bg-[#262626] border border-white/[0.08] rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col shadow-2xl overflow-hidden"
+            className="liquid-glass-surface rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-[#222222]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-white/[0.02]">
               <div className="flex items-center gap-2.5">
-                <Sliders className="w-4 h-4 text-[#2196F3]" />
+                <div className="w-8 h-8 rounded-full liquid-glass-pill flex items-center justify-center">
+                  <Sliders className="w-4 h-4 text-white" />
+                </div>
                 <div>
                   <h3 className="text-sm font-bold text-white">Broker Instrument Specification</h3>
                   <p className="text-[11px] text-neutral-400">Saved to Firestore for exact calculations</p>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 {instrumentSpecs[symbol.toUpperCase().trim()] && (
                   <button
                     type="button"
                     disabled={isSaving}
                     onClick={handleDelete}
                     title="Delete specification"
-                    className="p-2 text-neutral-400 hover:text-red-400 cursor-pointer"
+                    className="w-9 h-9 rounded-full liquid-glass-pill text-neutral-300 hover:text-[#F87171] cursor-pointer flex items-center justify-center"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -232,16 +234,17 @@ export const InstrumentSpecModal: React.FC = () => {
                   type="button"
                   disabled={isSaving}
                   onClick={() => setSpecModalSymbol(null)}
-                  className="p-2 text-neutral-400 hover:text-white cursor-pointer"
+                  aria-label="Close modal"
+                  className="w-9 h-9 rounded-full liquid-glass-pill text-neutral-300 hover:text-white cursor-pointer flex items-center justify-center"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4.5 h-4.5" />
                 </button>
               </div>
             </div>
 
             <form onSubmit={handleSave} className="p-4 sm:p-5 overflow-y-auto space-y-3.5">
               {errorMsg && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs">
+                <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-200 text-xs">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
@@ -253,19 +256,19 @@ export const InstrumentSpecModal: React.FC = () => {
                   Pre-fill Standard Broker Template (Verify with your broker):
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  <button type="button" onClick={() => applyTemplate('fx')} className="px-2.5 py-1 rounded bg-[#1C1C1C] hover:bg-[#333333] text-[11px] text-neutral-200 border border-white/10 cursor-pointer">
+                  <button type="button" onClick={() => applyTemplate('fx')} className="px-3 py-1 rounded-full liquid-glass-pill text-[11px] text-neutral-200 cursor-pointer">
                     FX 5-Digit
                   </button>
-                  <button type="button" onClick={() => applyTemplate('jpy')} className="px-2.5 py-1 rounded bg-[#1C1C1C] hover:bg-[#333333] text-[11px] text-neutral-200 border border-white/10 cursor-pointer">
+                  <button type="button" onClick={() => applyTemplate('jpy')} className="px-3 py-1 rounded-full liquid-glass-pill text-[11px] text-neutral-200 cursor-pointer">
                     JPY 3-Digit
                   </button>
-                  <button type="button" onClick={() => applyTemplate('gold')} className="px-2.5 py-1 rounded bg-[#1C1C1C] hover:bg-[#333333] text-[11px] text-neutral-200 border border-white/10 cursor-pointer">
+                  <button type="button" onClick={() => applyTemplate('gold')} className="px-3 py-1 rounded-full liquid-glass-pill text-[11px] text-neutral-200 cursor-pointer">
                     Gold (100 oz)
                   </button>
-                  <button type="button" onClick={() => applyTemplate('silver')} className="px-2.5 py-1 rounded bg-[#1C1C1C] hover:bg-[#333333] text-[11px] text-neutral-200 border border-white/10 cursor-pointer">
+                  <button type="button" onClick={() => applyTemplate('silver')} className="px-3 py-1 rounded-full liquid-glass-pill text-[11px] text-neutral-200 cursor-pointer">
                     Silver (5000 oz)
                   </button>
-                  <button type="button" onClick={() => applyTemplate('index')} className="px-2.5 py-1 rounded bg-[#1C1C1C] hover:bg-[#333333] text-[11px] text-neutral-200 border border-white/10 cursor-pointer">
+                  <button type="button" onClick={() => applyTemplate('index')} className="px-3 py-1 rounded-full liquid-glass-pill text-[11px] text-neutral-200 cursor-pointer">
                     Index / CFD (1x)
                   </button>
                 </div>
@@ -280,7 +283,7 @@ export const InstrumentSpecModal: React.FC = () => {
                     onChange={(e) => setSymbol(e.target.value)}
                     placeholder="e.g. US30"
                     required
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono font-bold text-white uppercase focus:outline-none focus:border-[#2196F3]"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs font-mono font-bold text-white uppercase"
                   />
                 </div>
                 <div>
@@ -288,13 +291,13 @@ export const InstrumentSpecModal: React.FC = () => {
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as InstrumentCategory)}
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#2196F3]"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs text-white cursor-pointer"
                   >
-                    <option value="Forex">Forex</option>
-                    <option value="Metal">Metal</option>
-                    <option value="Index">Index</option>
-                    <option value="Crypto">Crypto</option>
-                    <option value="CFD">CFD</option>
+                    <option value="Forex" className="bg-[#18191D] text-white">Forex</option>
+                    <option value="Metal" className="bg-[#18191D] text-white">Metal</option>
+                    <option value="Index" className="bg-[#18191D] text-white">Index</option>
+                    <option value="Crypto" className="bg-[#18191D] text-white">Crypto</option>
+                    <option value="CFD" className="bg-[#18191D] text-white">CFD</option>
                   </select>
                 </div>
               </div>
@@ -309,7 +312,7 @@ export const InstrumentSpecModal: React.FC = () => {
                     onChange={(e) => setContractSize(e.target.value)}
                     placeholder="100000"
                     required
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white"
+                    className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs font-mono text-white"
                   />
                 </div>
                 <div>
@@ -321,7 +324,7 @@ export const InstrumentSpecModal: React.FC = () => {
                     onChange={(e) => setTickSize(e.target.value)}
                     placeholder="0.00001"
                     required
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white"
+                    className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs font-mono text-white"
                   />
                 </div>
                 <div>
@@ -332,7 +335,7 @@ export const InstrumentSpecModal: React.FC = () => {
                     value={pipSize}
                     onChange={(e) => setPipSize(e.target.value)}
                     placeholder="0.0001"
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white"
+                    className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs font-mono text-white"
                   />
                 </div>
               </div>
@@ -346,7 +349,7 @@ export const InstrumentSpecModal: React.FC = () => {
                     onChange={(e) => setQuoteCurrency(e.target.value)}
                     placeholder="USD, JPY, EUR..."
                     required
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white uppercase"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs font-mono text-white uppercase"
                   />
                 </div>
                 <div>
@@ -356,13 +359,13 @@ export const InstrumentSpecModal: React.FC = () => {
                     value={baseCurrency}
                     onChange={(e) => setBaseCurrency(e.target.value)}
                     placeholder="e.g. USD for USDJPY"
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white uppercase"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-2 text-xs font-mono text-white uppercase"
                   />
                 </div>
               </div>
 
               {/* Broker Tick Values Override */}
-              <div className="bg-[#1C1C1C] border border-white/[0.06] rounded-xl p-3 space-y-2.5">
+              <div className="liquid-glass-subcard rounded-2xl p-3.5 space-y-2.5">
                 <span className="text-[11px] font-semibold text-neutral-300 block">
                   Broker Tick Values per 1.00 Lot (Optional — takes precedence if entered)
                 </span>
@@ -375,7 +378,7 @@ export const InstrumentSpecModal: React.FC = () => {
                       value={tickValueProfit}
                       onChange={(e) => setTickValueProfit(e.target.value)}
                       placeholder="Optional"
-                      className="w-full bg-[#262626] border border-white/10 rounded-lg px-2.5 py-2 text-xs font-mono text-white"
+                      className="w-full liquid-glass-input rounded-xl px-2.5 py-2 text-xs font-mono text-white"
                     />
                   </div>
                   <div>
@@ -386,7 +389,7 @@ export const InstrumentSpecModal: React.FC = () => {
                       value={tickValueLoss}
                       onChange={(e) => setTickValueLoss(e.target.value)}
                       placeholder="Optional"
-                      className="w-full bg-[#262626] border border-white/10 rounded-lg px-2.5 py-2 text-xs font-mono text-white"
+                      className="w-full liquid-glass-input rounded-xl px-2.5 py-2 text-xs font-mono text-white"
                     />
                   </div>
                   <div>
@@ -396,7 +399,7 @@ export const InstrumentSpecModal: React.FC = () => {
                       value={tickValueCurrency}
                       onChange={(e) => setTickValueCurrency(e.target.value)}
                       placeholder="USD"
-                      className="w-full bg-[#262626] border border-white/10 rounded-lg px-2.5 py-2 text-xs font-mono text-white uppercase"
+                      className="w-full liquid-glass-input rounded-xl px-2.5 py-2 text-xs font-mono text-white uppercase"
                     />
                   </div>
                 </div>
@@ -412,7 +415,7 @@ export const InstrumentSpecModal: React.FC = () => {
                     value={minLot}
                     onChange={(e) => setMinLot(e.target.value)}
                     required
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white"
+                    className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs font-mono text-white"
                   />
                 </div>
                 <div>
@@ -423,7 +426,7 @@ export const InstrumentSpecModal: React.FC = () => {
                     value={maxLot}
                     onChange={(e) => setMaxLot(e.target.value)}
                     required
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white"
+                    className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs font-mono text-white"
                   />
                 </div>
                 <div>
@@ -434,7 +437,7 @@ export const InstrumentSpecModal: React.FC = () => {
                     value={lotStep}
                     onChange={(e) => setLotStep(e.target.value)}
                     required
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white"
+                    className="w-full liquid-glass-input rounded-2xl px-3 py-2 text-xs font-mono text-white"
                   />
                 </div>
               </div>
@@ -444,14 +447,14 @@ export const InstrumentSpecModal: React.FC = () => {
                   type="button"
                   disabled={isSaving}
                   onClick={() => setSpecModalSymbol(null)}
-                  className="px-4 py-2.5 rounded-lg bg-[#333333] text-xs font-semibold text-neutral-200 cursor-pointer"
+                  className="px-4 py-2.5 rounded-full liquid-glass-pill text-xs font-semibold text-neutral-200 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 rounded-lg bg-[#2196F3] hover:bg-[#1976D2] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                  className="px-5 py-2.5 rounded-full liquid-glass-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                 >
                   {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Save Specification</span>

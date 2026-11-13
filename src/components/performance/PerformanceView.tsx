@@ -295,13 +295,13 @@ export const PerformanceView: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-3.5 py-4 pb-24 space-y-3">
-      {/* 0. All Accounts Multi-Currency Breakdown (Only shown when viewing All Accounts) */}
+    <div className="max-w-4xl mx-auto px-3.5 py-4 pb-28 space-y-3">
+      {/* 0. All Accounts Multi-Currency Breakdown */}
       {isAllAccounts && (
-        <div className="bg-[#262626] rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.06] space-y-3">
+        <div className="liquid-glass-card rounded-3xl p-4 space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#2196F3]" />
+              <Layers className="w-4 h-4 text-neutral-200" />
               <div>
                 <h2 className="text-xs font-bold text-white">All Accounts Portfolio</h2>
                 <span className="text-[10px] text-neutral-400">
@@ -310,14 +310,14 @@ export const PerformanceView: React.FC = () => {
               </div>
             </div>
             {!portfolioSummary.isSingleCurrency && (
-              <div className="flex bg-[#1C1C1C] rounded-lg p-0.5 border border-white/10 text-[10px] shrink-0">
+              <div className="flex liquid-glass-subcard rounded-full p-0.5 text-[10px] shrink-0">
                 {(['USD', 'NGN'] as const).map((rc) => (
                   <button
                     key={rc}
                     type="button"
                     onClick={() => setReportingCurrency(rc)}
-                    className={`px-2 py-1 rounded font-bold cursor-pointer ${
-                      reportingCurrency === rc ? 'bg-[#2196F3] text-white' : 'text-neutral-400'
+                    className={`px-2.5 py-1 rounded-full font-bold cursor-pointer ${
+                      reportingCurrency === rc ? 'liquid-glass-primary' : 'text-neutral-400 hover:text-white'
                     }`}
                   >
                     {rc} ({getCurrencySymbol(rc)})
@@ -332,7 +332,7 @@ export const PerformanceView: React.FC = () => {
             {portfolioSummary.subtotalsByCurrency.map((sub) => (
               <div
                 key={sub.currency}
-                className="bg-[#1C1C1C] rounded-lg p-3 border border-white/[0.05] flex items-center justify-between"
+                className="liquid-glass-subcard rounded-2xl p-3 flex items-center justify-between"
               >
                 <div>
                   <span className="text-[10px] font-semibold text-neutral-400 block">
@@ -344,7 +344,7 @@ export const PerformanceView: React.FC = () => {
                 </div>
                 <span
                   className={`text-xs font-bold font-mono tabular-nums ${
-                    sub.netReturn >= 0 ? 'text-[#2ECC71]' : 'text-[#EF4444]'
+                    sub.netReturn >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'
                   }`}
                 >
                   {formatMoney(sub.netReturn, sub.currency, true)}
@@ -355,7 +355,7 @@ export const PerformanceView: React.FC = () => {
 
           {/* Converted Combined Total (if multi-currency) */}
           {!portfolioSummary.isSingleCurrency && (
-            <div className="bg-[#1C1C1C] rounded-lg p-3 border border-[#2196F3]/25">
+            <div className="liquid-glass-subcard rounded-2xl p-3">
               {portfolioSummary.convertedTotal.ok ? (
                 <div className="flex items-center justify-between gap-2">
                   <div>
@@ -379,8 +379,8 @@ export const PerformanceView: React.FC = () => {
                     <span
                       className={`text-xs font-bold font-mono tabular-nums ${
                         portfolioSummary.convertedTotal.totalNetReturn >= 0
-                          ? 'text-[#2ECC71]'
-                          : 'text-[#EF4444]'
+                          ? 'text-[#34D399]'
+                          : 'text-[#F87171]'
                       }`}
                     >
                       {formatMoney(
@@ -411,7 +411,7 @@ export const PerformanceView: React.FC = () => {
                       value={quickRateInput}
                       onChange={(e) => setQuickRateInput(e.target.value)}
                       placeholder="Rate"
-                      className="flex-1 bg-[#262626] border border-white/15 rounded px-2.5 py-1 text-xs font-mono text-white"
+                      className="flex-1 liquid-glass-input rounded-full px-3 py-1.5 text-xs font-mono text-white"
                     />
                     <span className="text-xs font-mono text-white shrink-0">
                       {portfolioSummary.convertedTotal.missingConversions[0].suggestedKey.split('_')[1]}
@@ -423,7 +423,7 @@ export const PerformanceView: React.FC = () => {
                         !portfolioSummary.convertedTotal.ok &&
                         handleSaveQuickRate(portfolioSummary.convertedTotal.missingConversions[0].suggestedKey)
                       }
-                      className="px-3 py-1 rounded bg-[#2196F3] text-white text-xs font-bold cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-full liquid-glass-primary text-xs font-bold cursor-pointer"
                     >
                       {savingRate ? '...' : 'Save'}
                     </button>
@@ -434,7 +434,7 @@ export const PerformanceView: React.FC = () => {
           )}
 
           {/* Per-Account Breakdown Rows */}
-          <div className="divide-y divide-white/[0.05] border-t border-white/[0.06] pt-1">
+          <div className="divide-y divide-white/[0.06] border-t border-white/[0.08] pt-1">
             {accounts.map((acc) => {
               const net = acc.currentBalance - acc.startingBalance;
               const pct = acc.startingBalance > 0 ? (net / acc.startingBalance) * 100 : 0;
@@ -443,12 +443,12 @@ export const PerformanceView: React.FC = () => {
                   key={acc.id}
                   type="button"
                   onClick={() => setSelectedAccountId(acc.id)}
-                  className="w-full py-2 flex items-center justify-between text-left hover:bg-white/[0.03] rounded px-1 cursor-pointer"
+                  className="w-full py-2.5 flex items-center justify-between text-left hover:bg-white/[0.04] rounded-xl px-2 cursor-pointer"
                 >
                   <div>
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-bold text-white">{acc.name}</span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-neutral-200">
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-white/10 text-neutral-200">
                         {acc.currency}
                       </span>
                       <span className="text-[10px] text-neutral-400">{acc.type}</span>
@@ -460,7 +460,7 @@ export const PerformanceView: React.FC = () => {
                     </span>
                     <span
                       className={`text-[10px] font-semibold ${
-                        net >= 0 ? 'text-[#2ECC71]' : 'text-[#EF4444]'
+                        net >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'
                       }`}
                     >
                       {formatMoney(net, acc.currency, true)} ({pct >= 0 ? '+' : ''}{pct.toFixed(1)}%)
@@ -473,8 +473,8 @@ export const PerformanceView: React.FC = () => {
         </div>
       )}
 
-      {/* 1. Timeframe Dropdown & Headline Return (Exact match to IMG_3533) */}
-      <div className="bg-[#262626] rounded-xl px-4 py-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04] flex items-center justify-between">
+      {/* 1. Timeframe Dropdown & Headline Return */}
+      <div className="liquid-glass-card rounded-2xl px-4 py-3.5 flex items-center justify-between">
         <div className="relative flex items-center gap-2">
           <select
             value={timeframe}
@@ -482,10 +482,10 @@ export const PerformanceView: React.FC = () => {
             aria-label="Select performance timeframe"
             className="appearance-none bg-transparent text-sm font-bold text-white pr-8 py-1 cursor-pointer focus:outline-none"
           >
-            <option value="all" className="bg-[#262626] text-white">All time</option>
-            <option value="ytd" className="bg-[#262626] text-white">Year-to-date</option>
-            <option value="month" className="bg-[#262626] text-white">This Month</option>
-            <option value="week" className="bg-[#262626] text-white">This Week</option>
+            <option value="all" className="bg-[#18191D] text-white">All time</option>
+            <option value="ytd" className="bg-[#18191D] text-white">Year-to-date</option>
+            <option value="month" className="bg-[#18191D] text-white">This Month</option>
+            <option value="week" className="bg-[#18191D] text-white">This Week</option>
           </select>
           <ChevronDown className="w-4 h-4 text-white/80 pointer-events-none -ml-6" />
         </div>
@@ -512,14 +512,14 @@ export const PerformanceView: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Equity Curve Chart Card (Exact match to IMG_3533) */}
-      <div className="bg-[#262626] rounded-xl p-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
+      {/* 2. Equity Curve Chart Card */}
+      <div className="liquid-glass-card rounded-3xl p-4">
         <div className="flex items-center justify-between mb-1 px-1">
           <span className="text-[11px] font-mono text-neutral-400 tabular-nums">
             {chartData.maxVal >= 0 ? '+' : ''}{chartData.maxVal.toFixed(1)}%
           </span>
           {hoverIdx !== null && chartData.coords[hoverIdx] && (
-            <span className="text-[11px] font-mono font-bold text-[#2196F3] tabular-nums">
+            <span className="text-[11px] font-mono font-bold text-white tabular-nums">
               {chartData.coords[hoverIdx].label} · {chartData.coords[hoverIdx].pct >= 0 ? '+' : ''}
               {chartData.coords[hoverIdx].pct.toFixed(2)}%
             </span>
@@ -528,6 +528,13 @@ export const PerformanceView: React.FC = () => {
 
         <div className="relative w-full h-48">
           <svg viewBox="0 0 350 190" className="w-full h-full overflow-visible">
+            <defs>
+              <linearGradient id="eq-area-glass" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgba(255,255,255,0.16)" />
+                <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+              </linearGradient>
+            </defs>
+
             {/* Y-axis labels */}
             <text x="4" y="22" className="fill-neutral-400 text-[10px] font-mono">
               +{chartData.maxVal.toFixed(1)}%
@@ -540,16 +547,24 @@ export const PerformanceView: React.FC = () => {
             </text>
 
             {/* Horizontal gridlines */}
-            <line x1="48" y1="18" x2="340" y2="18" stroke="#3B3B3B" strokeWidth="1" />
-            <line x1="48" y1="91" x2="340" y2="91" stroke="#3B3B3B" strokeWidth="1" />
-            <line x1="48" y1="166" x2="340" y2="166" stroke="#525252" strokeWidth="1" />
+            <line x1="48" y1="18" x2="340" y2="18" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+            <line x1="48" y1="91" x2="340" y2="91" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+            <line x1="48" y1="166" x2="340" y2="166" stroke="rgba(255,255,255,0.16)" strokeWidth="1" />
+
+            {/* Subtle glass sheen under equity line */}
+            {chartData.coords.length > 1 && (
+              <path
+                d={`${chartData.path} L ${chartData.coords[chartData.coords.length - 1].x} 166 L ${chartData.coords[0].x} 166 Z`}
+                fill="url(#eq-area-glass)"
+              />
+            )}
 
             {/* Equity line */}
             <path
               d={chartData.path}
               fill="none"
-              stroke="#2196F3"
-              strokeWidth="2.5"
+              stroke="#FFFFFF"
+              strokeWidth="2.4"
               strokeLinecap="round"
             />
 
@@ -558,7 +573,7 @@ export const PerformanceView: React.FC = () => {
               <g key={i} onMouseEnter={() => setHoverIdx(i)} onClick={() => setHoverIdx(i)}>
                 <circle cx={pt.x} cy={pt.y} r="10" fill="transparent" className="cursor-pointer" />
                 {hoverIdx === i && (
-                  <circle cx={pt.x} cy={pt.y} r="4" fill="#2196F3" stroke="#FFFFFF" strokeWidth="1.5" />
+                  <circle cx={pt.x} cy={pt.y} r="4.5" fill="#FFFFFF" stroke="#141518" strokeWidth="2" />
                 )}
               </g>
             ))}
@@ -575,7 +590,7 @@ export const PerformanceView: React.FC = () => {
                     x={pt.x}
                     y="185"
                     textAnchor="middle"
-                    className="fill-neutral-300 text-[10px] font-medium"
+                    className="fill-neutral-400 text-[10px] font-medium"
                   >
                     {pt.label}
                   </text>
@@ -585,91 +600,91 @@ export const PerformanceView: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. 3x3 Stat Grid (Exact 9 metrics from IMG_3532 & IMG_3533) */}
+      {/* 3. 3x3 Stat Grid */}
       <div className="grid grid-cols-3 gap-2.5">
-        <div className="bg-[#262626] rounded-xl py-3.5 px-2 text-center shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
-          <span className="text-[11px] font-semibold text-neutral-300 block mb-1">All Time</span>
+        <div className="liquid-glass-card rounded-2xl py-3.5 px-2 text-center">
+          <span className="text-[11px] font-semibold text-neutral-400 block mb-1">All Time</span>
           <span className="text-[17px] font-bold font-mono text-white tabular-nums">
             {stats.allTimePct.toFixed(2)}%
           </span>
         </div>
 
-        <div className="bg-[#262626] rounded-xl py-3.5 px-2 text-center shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
-          <span className="text-[11px] font-semibold text-neutral-300 block mb-1">Year-to-date</span>
+        <div className="liquid-glass-card rounded-2xl py-3.5 px-2 text-center">
+          <span className="text-[11px] font-semibold text-neutral-400 block mb-1">Year-to-date</span>
           <span className="text-[17px] font-bold font-mono text-white tabular-nums">
             {stats.ytdPct.toFixed(2)}%
           </span>
         </div>
 
-        <div className="bg-[#262626] rounded-xl py-3.5 px-2 text-center shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
-          <span className="text-[11px] font-semibold text-neutral-300 block mb-1">Weekly</span>
+        <div className="liquid-glass-card rounded-2xl py-3.5 px-2 text-center">
+          <span className="text-[11px] font-semibold text-neutral-400 block mb-1">Weekly</span>
           <span className="text-[17px] font-bold font-mono text-white tabular-nums">
             {stats.weeklyAvgPct.toFixed(2)}%
           </span>
         </div>
 
-        <div className="bg-[#262626] rounded-xl py-3.5 px-2 text-center shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
-          <span className="text-[11px] font-semibold text-neutral-300 block mb-1">Per Trade</span>
+        <div className="liquid-glass-card rounded-2xl py-3.5 px-2 text-center">
+          <span className="text-[11px] font-semibold text-neutral-400 block mb-1">Per Trade</span>
           <span className="text-[17px] font-bold font-mono text-white tabular-nums">
             {stats.perTradePct.toFixed(2)}%
           </span>
         </div>
 
-        <div className="bg-[#262626] rounded-xl py-3.5 px-2 text-center shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
-          <span className="text-[11px] font-semibold text-neutral-300 block mb-1">Average Winner</span>
+        <div className="liquid-glass-card rounded-2xl py-3.5 px-2 text-center">
+          <span className="text-[11px] font-semibold text-neutral-400 block mb-1">Average Winner</span>
           <span className="text-[17px] font-bold font-mono text-white tabular-nums">
             {stats.avgWinnerPct.toFixed(2)}%
           </span>
         </div>
 
-        <div className="bg-[#262626] rounded-xl py-3.5 px-2 text-center shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
-          <span className="text-[11px] font-semibold text-neutral-300 block mb-1">Average Loser</span>
+        <div className="liquid-glass-card rounded-2xl py-3.5 px-2 text-center">
+          <span className="text-[11px] font-semibold text-neutral-400 block mb-1">Average Loser</span>
           <span className="text-[17px] font-bold font-mono text-white tabular-nums">
             {stats.avgLoserPct.toFixed(2)}%
           </span>
         </div>
 
-        <div className="bg-[#262626] rounded-xl py-3.5 px-2 text-center shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
-          <span className="text-[11px] font-semibold text-neutral-300 block mb-1">Winners</span>
+        <div className="liquid-glass-card rounded-2xl py-3.5 px-2 text-center">
+          <span className="text-[11px] font-semibold text-neutral-400 block mb-1">Winners</span>
           <span className="text-[17px] font-bold font-mono text-white tabular-nums">
             {stats.winnersCount}
           </span>
         </div>
 
-        <div className="bg-[#262626] rounded-xl py-3.5 px-2 text-center shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
-          <span className="text-[11px] font-semibold text-neutral-300 block mb-1">Losers</span>
+        <div className="liquid-glass-card rounded-2xl py-3.5 px-2 text-center">
+          <span className="text-[11px] font-semibold text-neutral-400 block mb-1">Losers</span>
           <span className="text-[17px] font-bold font-mono text-white tabular-nums">
             {stats.losersCount}
           </span>
         </div>
 
-        <div className="bg-[#262626] rounded-xl py-3.5 px-2 text-center shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
-          <span className="text-[11px] font-semibold text-neutral-300 block mb-1">Win Rate</span>
+        <div className="liquid-glass-card rounded-2xl py-3.5 px-2 text-center">
+          <span className="text-[11px] font-semibold text-neutral-400 block mb-1">Win Rate</span>
           <span className="text-[17px] font-bold font-mono text-white tabular-nums">
             {stats.winRate}%
           </span>
         </div>
       </div>
 
-      {/* 4. 2-Col Risk Cards (Max Drawdown | High Water Mark) */}
+      {/* 4. 2-Col Risk Cards */}
       <div className="grid grid-cols-2 gap-2.5">
-        <div className="bg-[#262626] rounded-xl py-3.5 px-3 text-center shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
-          <span className="text-[11px] font-semibold text-neutral-300 block mb-1">Max Drawdown</span>
+        <div className="liquid-glass-card rounded-2xl py-3.5 px-3 text-center">
+          <span className="text-[11px] font-semibold text-neutral-400 block mb-1">Max Drawdown</span>
           <span className="text-[17px] font-bold font-mono text-white tabular-nums">
             {stats.maxDrawdownPct === 0 ? '-0.00%' : `${stats.maxDrawdownPct.toFixed(2)}%`}
           </span>
         </div>
 
-        <div className="bg-[#262626] rounded-xl py-3.5 px-3 text-center shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
-          <span className="text-[11px] font-semibold text-neutral-300 block mb-1">High Water Mark</span>
+        <div className="liquid-glass-card rounded-2xl py-3.5 px-3 text-center">
+          <span className="text-[11px] font-semibold text-neutral-400 block mb-1">High Water Mark</span>
           <span className="text-[17px] font-bold font-mono text-white tabular-nums">
             +{stats.hwmPct.toFixed(2)}%
           </span>
         </div>
       </div>
 
-      {/* 5. Symbol Data Card (Exact match to IMG_3532) */}
-      <div className="bg-[#262626] rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
+      {/* 5. Symbol Data Card */}
+      <div className="liquid-glass-card rounded-2xl p-4">
         <h3 className="text-xs font-bold text-white text-center mb-3">Symbol Data</h3>
         {activeSymbolRow ? (
           <div className="grid grid-cols-12 items-end gap-2">
@@ -678,29 +693,29 @@ export const PerformanceView: React.FC = () => {
                 value={activeSymbolRow.symbol}
                 onChange={(e) => setSelectedSymbol(e.target.value)}
                 aria-label="Inspect symbol"
-                className="w-full bg-transparent border-b border-white/30 pb-1 text-sm font-bold text-white focus:outline-none focus:border-[#2196F3] cursor-pointer"
+                className="w-full bg-transparent border-b border-white/25 pb-1 text-sm font-bold text-white focus:outline-none focus:border-white cursor-pointer"
               >
                 {symbolRows.map((r) => (
-                  <option key={r.symbol} value={r.symbol} className="bg-[#262626] text-white">
+                  <option key={r.symbol} value={r.symbol} className="bg-[#18191D] text-white">
                     {r.symbol}
                   </option>
                 ))}
               </select>
             </div>
             <div className="col-span-2 text-center">
-              <span className="text-[10px] text-neutral-300 block">W</span>
+              <span className="text-[10px] text-neutral-400 block">W</span>
               <span className="text-sm font-bold font-mono text-white tabular-nums">{activeSymbolRow.w}</span>
             </div>
             <div className="col-span-1 text-center">
-              <span className="text-[10px] text-neutral-300 block">L</span>
+              <span className="text-[10px] text-neutral-400 block">L</span>
               <span className="text-sm font-bold font-mono text-white tabular-nums">{activeSymbolRow.l}</span>
             </div>
             <div className="col-span-2 text-center">
-              <span className="text-[10px] text-neutral-300 block">Win</span>
+              <span className="text-[10px] text-neutral-400 block">Win</span>
               <span className="text-sm font-bold font-mono text-white tabular-nums">{activeSymbolRow.winRate}%</span>
             </div>
             <div className="col-span-2 text-right">
-              <span className="text-[10px] text-neutral-300 block">Return</span>
+              <span className="text-[10px] text-neutral-400 block">Return</span>
               <span className="text-sm font-bold font-mono text-white tabular-nums">
                 {activeSymbolRow.returnPct.toFixed(1)}%
               </span>
@@ -711,14 +726,14 @@ export const PerformanceView: React.FC = () => {
         )}
       </div>
 
-      {/* 6. Ranked Symbol Table Card (Exact match to IMG_3532) */}
-      <div className="bg-[#262626] rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
+      {/* 6. Ranked Symbol Table Card */}
+      <div className="liquid-glass-card rounded-2xl p-4">
         <div className="flex items-center justify-between mb-2">
           <button
             type="button"
             onClick={() => setIsTableExpanded(!isTableExpanded)}
             aria-label="Toggle symbol breakdown"
-            className="p-1 text-white/80 hover:text-white cursor-pointer"
+            className="p-1.5 rounded-full text-white/80 hover:text-white hover:bg-white/[0.06] cursor-pointer"
           >
             <ChevronDown className={`w-4 h-4 transition-transform ${isTableExpanded ? '' : '-rotate-90'}`} />
           </button>
@@ -727,16 +742,16 @@ export const PerformanceView: React.FC = () => {
             type="button"
             onClick={cycleSort}
             title={`Sorted by ${sortBy} (tap to switch)`}
-            className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2196F3] cursor-pointer py-1 px-2 rounded hover:bg-white/[0.04]"
+            className="flex items-center gap-1.5 text-[11px] font-semibold text-white cursor-pointer py-1 px-3 rounded-full liquid-glass-pill"
           >
-            <span className="text-neutral-400 font-normal">Sort: {sortBy === 'winRate' ? 'Win %' : sortBy}</span>
-            <ListFilter className="w-4 h-4 text-[#2196F3]" />
+            <span className="text-neutral-300 font-normal">Sort: {sortBy === 'winRate' ? 'Win %' : sortBy}</span>
+            <ListFilter className="w-3.5 h-3.5 text-white" />
           </button>
         </div>
 
         {isTableExpanded && (
           <div className="space-y-1.5">
-            <div className="grid grid-cols-12 text-[11px] font-semibold text-neutral-300 pb-1">
+            <div className="grid grid-cols-12 text-[11px] font-semibold text-neutral-400 pb-1">
               <div className="col-span-1">#</div>
               <div className="col-span-4">Symbol</div>
               <div className="col-span-1 text-center">W</div>
@@ -751,7 +766,7 @@ export const PerformanceView: React.FC = () => {
                   key={row.symbol}
                   type="button"
                   onClick={() => setSelectedSymbol(row.symbol)}
-                  className="w-full grid grid-cols-12 items-center py-1 text-left hover:bg-white/[0.04] rounded transition-colors cursor-pointer"
+                  className="w-full grid grid-cols-12 items-center py-1.5 px-1 text-left hover:bg-white/[0.05] rounded-xl transition-colors cursor-pointer"
                 >
                   <div className="col-span-1 text-sm font-bold font-mono text-white tabular-nums">{idx + 1}</div>
                   <div className="col-span-4 text-sm font-bold text-white truncate pr-2">{row.symbol}</div>
@@ -770,11 +785,11 @@ export const PerformanceView: React.FC = () => {
         )}
       </div>
 
-      {/* 7. Best Days of Week Card (Exact match to IMG_3532) */}
-      <div className="bg-[#262626] rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.28)] border border-white/[0.04]">
+      {/* 7. Best Days of Week Card */}
+      <div className="liquid-glass-card rounded-2xl p-4">
         <h3 className="text-xs font-bold text-white text-center mb-3">Best Days of Week</h3>
         <div className="space-y-1.5">
-          <div className="grid grid-cols-12 text-[11px] font-semibold text-neutral-300 pb-1">
+          <div className="grid grid-cols-12 text-[11px] font-semibold text-neutral-400 pb-1">
             <div className="col-span-6">Day</div>
             <div className="col-span-3 text-center">Trades</div>
             <div className="col-span-3 text-right">Avg Return</div>

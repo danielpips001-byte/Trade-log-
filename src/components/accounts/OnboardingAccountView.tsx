@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useTrading } from '../../context/TradingContext';
 import { AccountCurrency, AccountType } from '../../types/trading';
 import { getCurrencySymbol } from '../../utils/calculations';
+import { TradeLogLogo } from '../brand/TradeLogLogo';
+import { PWAInstallControl } from '../pwa/PWAInstallControl';
 import {
-  Wallet,
   ArrowRight,
   Loader2,
   AlertCircle,
@@ -96,23 +97,13 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#3D3D3D] text-white flex flex-col font-sans selection:bg-[#2196F3] selection:text-white">
-      {/* Clean Minimal Top Bar */}
-      <header className="sticky top-0 z-30 bg-[#222222] border-b border-white/[0.07] px-4 h-14 flex items-center justify-center pt-safe">
+    <div className="min-h-screen text-white flex flex-col font-sans selection:bg-white/25 selection:text-white">
+      {/* Frosted Glass Minimal Header */}
+      <header className="sticky top-0 z-30 liquid-glass-bar border-x-0 border-t-0 px-4 h-15 flex items-center justify-center pt-safe">
         <div className="max-w-lg w-full flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#2196F3]/15 border border-[#2196F3]/30 flex items-center justify-center text-[#2196F3]">
-              <Wallet className="w-4 h-4" />
-            </div>
-            <div>
-              <h1 className="text-sm font-bold text-white leading-tight">TradeLog</h1>
-              <span className="text-[11px] text-neutral-400 leading-tight block">
-                Personal Trading Journal
-              </span>
-            </div>
-          </div>
+          <TradeLogLogo size="md" showWordmark />
 
-          <span className="text-[11px] font-mono text-neutral-400 bg-[#1C1C1C] px-2.5 py-1 rounded-md border border-white/[0.06]">
+          <span className="text-[11px] font-mono text-neutral-300 liquid-glass-subcard px-3 py-1 rounded-full">
             {workspaceId}
           </span>
         </div>
@@ -126,19 +117,22 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
           transition={{ type: 'spring', stiffness: 380, damping: 28 }}
           className="w-full max-w-md space-y-4"
         >
-          <div className="bg-[#262626] border border-white/[0.07] rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.45)] overflow-hidden">
-            <div className="px-5 py-5 border-b border-white/[0.06] bg-[#222222]">
-              <h2 className="text-lg font-bold text-white tracking-tight">
-                Add Your Trading Account
-              </h2>
-              <p className="text-xs text-neutral-400 mt-1 leading-relaxed">
-                Set up your first account to start logging trades, calculating exact risk, and tracking performance.
-              </p>
+          <div className="liquid-glass-surface rounded-3xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-white/[0.08] bg-white/[0.02] flex items-start gap-3.5">
+              <TradeLogLogo size="md" className="mt-0.5" />
+              <div>
+                <h2 className="text-lg font-bold text-white tracking-tight">
+                  Add Your Trading Account
+                </h2>
+                <p className="text-xs text-neutral-400 mt-1 leading-relaxed">
+                  Set up your first account to start logging trades, calculating exact risk, and tracking performance.
+                </p>
+              </div>
             </div>
 
-            <form onSubmit={handleCreateSubmit} className="p-5 space-y-4">
+            <form onSubmit={handleCreateSubmit} className="p-6 space-y-4">
               {errorMsg && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-medium">
+                <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-200 text-xs font-medium">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
@@ -156,7 +150,7 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
                   placeholder="e.g. Personal Live, Exness NGN, Demo Account"
                   required
                   autoFocus
-                  className="w-full bg-[#1C1C1C] border border-white/10 rounded-xl px-3.5 py-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#2196F3] transition-colors"
+                  className="w-full liquid-glass-input rounded-2xl px-4 py-3 text-sm text-white placeholder-neutral-500 transition-colors"
                 />
               </div>
 
@@ -169,10 +163,10 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleCurrencySelect('USD')}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-colors cursor-pointer min-h-[42px] ${
+                    className={`py-2.5 px-3 rounded-full text-xs font-bold border transition-colors cursor-pointer min-h-[42px] ${
                       currency === 'USD'
-                        ? 'bg-[#2196F3] text-white border-[#2196F3]'
-                        : 'bg-[#1C1C1C] text-neutral-300 border-white/10 hover:border-white/25'
+                        ? 'liquid-glass-primary'
+                        : 'liquid-glass-pill text-neutral-300'
                     }`}
                   >
                     USD ($)
@@ -180,10 +174,10 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
                   <button
                     type="button"
                     onClick={() => handleCurrencySelect('NGN')}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-colors cursor-pointer min-h-[42px] ${
+                    className={`py-2.5 px-3 rounded-full text-xs font-bold border transition-colors cursor-pointer min-h-[42px] ${
                       currency === 'NGN'
-                        ? 'bg-[#2196F3] text-white border-[#2196F3]'
-                        : 'bg-[#1C1C1C] text-neutral-300 border-white/10 hover:border-white/25'
+                        ? 'liquid-glass-primary'
+                        : 'liquid-glass-pill text-neutral-300'
                     }`}
                   >
                     NGN (₦)
@@ -192,10 +186,10 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
                     value={currency}
                     onChange={(e) => handleCurrencySelect(e.target.value as AccountCurrency)}
                     aria-label="Select currency"
-                    className="bg-[#1C1C1C] border border-white/10 rounded-xl px-2.5 py-2 text-xs font-semibold text-neutral-200 focus:outline-none focus:border-[#2196F3] min-h-[42px]"
+                    className="liquid-glass-input rounded-full px-3 py-2 text-xs font-semibold text-neutral-200 min-h-[42px] cursor-pointer"
                   >
                     {ALL_CURRENCIES.map((c) => (
-                      <option key={c} value={c}>
+                      <option key={c} value={c} className="bg-[#18191D] text-white">
                         {c} ({getCurrencySymbol(c)})
                       </option>
                     ))}
@@ -212,11 +206,11 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value as AccountType)}
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-[#2196F3]"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-3 text-sm text-white cursor-pointer"
                   >
-                    <option value="Live">Live</option>
-                    <option value="Demo">Demo</option>
-                    <option value="Prop Firm">Prop Firm</option>
+                    <option value="Live" className="bg-[#18191D] text-white">Live</option>
+                    <option value="Demo" className="bg-[#18191D] text-white">Demo</option>
+                    <option value="Prop Firm" className="bg-[#18191D] text-white">Prop Firm</option>
                   </select>
                 </div>
 
@@ -230,7 +224,7 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
                     value={startingBalance}
                     onChange={(e) => setStartingBalance(e.target.value)}
                     required
-                    className="w-full bg-[#1C1C1C] border border-white/10 rounded-xl px-3.5 py-3 text-sm font-mono font-bold text-white tabular-nums focus:outline-none focus:border-[#2196F3]"
+                    className="w-full liquid-glass-input rounded-2xl px-3.5 py-3 text-sm font-mono font-bold text-white tabular-nums"
                   />
                 </div>
               </div>
@@ -241,7 +235,7 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
                   type="submit"
                   whileTap={{ scale: 0.98 }}
                   disabled={isCreating}
-                  className="w-full py-3.5 px-5 rounded-xl bg-[#2196F3] hover:bg-[#1976D2] disabled:opacity-60 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-[0_6px_20px_rgba(33,150,243,0.35)] transition-colors cursor-pointer min-h-[48px]"
+                  className="w-full py-3.5 px-5 rounded-full liquid-glass-primary disabled:opacity-60 text-sm font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer min-h-[48px]"
                 >
                   {isCreating ? (
                     <>
@@ -250,7 +244,7 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
                     </>
                   ) : (
                     <>
-                      <span>Create Account & Start Journaling</span>
+                      <span>Create Account &amp; Start Journaling</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
@@ -260,17 +254,17 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
           </div>
 
           {/* Optional Sync Key Restore */}
-          <div className="bg-[#262626]/80 border border-white/[0.06] rounded-xl overflow-hidden">
+          <div className="liquid-glass-card rounded-2xl overflow-hidden">
             <button
               type="button"
               onClick={() => {
                 setShowRestore(!showRestore);
                 setRestoreError(null);
               }}
-              className="w-full px-4 py-3 flex items-center justify-between text-xs font-semibold text-neutral-300 hover:text-white cursor-pointer"
+              className="w-full px-4 py-3.5 flex items-center justify-between text-xs font-semibold text-neutral-300 hover:text-white cursor-pointer"
             >
               <span className="flex items-center gap-2">
-                <KeyRound className="w-3.5 h-3.5 text-[#2196F3]" />
+                <KeyRound className="w-3.5 h-3.5 text-neutral-300" />
                 <span>Already have a Sync Key? Restore your journal</span>
               </span>
               <ChevronDown
@@ -288,10 +282,10 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.18 }}
                   onSubmit={handleRestoreSubmit}
-                  className="px-4 pb-4 pt-1 space-y-2.5 border-t border-white/[0.05]"
+                  className="px-4 pb-4 pt-2 space-y-2.5 border-t border-white/[0.06]"
                 >
                   {restoreError && (
-                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-red-500/15 border border-red-500/30 text-red-300 text-xs">
+                    <div className="flex items-center gap-2 p-2.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-200 text-xs">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>{restoreError}</span>
                     </div>
@@ -303,12 +297,12 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
                       value={syncKeyInput}
                       onChange={(e) => setSyncKeyInput(e.target.value.toUpperCase())}
                       placeholder="e.g. TL-7K9P4M2X"
-                      className="flex-1 bg-[#1C1C1C] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono uppercase text-white placeholder-neutral-500 focus:outline-none focus:border-[#2196F3]"
+                      className="flex-1 liquid-glass-input rounded-full px-3.5 py-2 text-xs font-mono uppercase text-white placeholder-neutral-500"
                     />
                     <button
                       type="submit"
                       disabled={isRestoring}
-                      className="px-4 py-2 rounded-lg bg-[#333333] hover:bg-[#404040] disabled:opacity-60 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[38px]"
+                      className="px-4 py-2 rounded-full liquid-glass-pill disabled:opacity-60 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[38px]"
                     >
                       {isRestoring && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                       <span>Restore</span>
@@ -318,6 +312,9 @@ export const OnboardingAccountView: React.FC<OnboardingAccountViewProps> = ({
               )}
             </AnimatePresence>
           </div>
+
+          {/* Discreet Install TradeLog option (hidden if already running in standalone mode) */}
+          <PWAInstallControl variant="onboarding" />
         </motion.div>
       </main>
     </div>

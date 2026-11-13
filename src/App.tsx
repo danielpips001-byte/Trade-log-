@@ -10,12 +10,15 @@ import { OnboardingAccountView } from './components/accounts/OnboardingAccountVi
 import { AddTradeModal } from './components/trades/AddTradeModal';
 import { TradeDetailModal } from './components/trades/TradeDetailModal';
 import { InstrumentSpecModal } from './components/specs/InstrumentSpecModal';
+import { OfflineBanner } from './components/pwa/OfflineBanner';
+import { usePWAInstall } from './hooks/usePWAInstall';
 import { CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const AppContent: React.FC = () => {
   const { activeTab, accounts } = useTrading();
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  usePWAInstall();
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -23,7 +26,8 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#3D3D3D] text-white flex flex-col font-sans selection:bg-[#2196F3] selection:text-white overflow-x-hidden">
+    <div className="min-h-screen text-white flex flex-col font-sans selection:bg-white/25 selection:text-white overflow-x-hidden">
+      <OfflineBanner />
       {/* Global Confirmation Toast */}
       <AnimatePresence>
         {toastMsg && (
@@ -31,9 +35,9 @@ const AppContent: React.FC = () => {
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
-            className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[#222222] border border-[#2ECC71]/40 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-semibold whitespace-nowrap"
+            className="fixed top-16 left-1/2 -translate-x-1/2 z-50 liquid-glass-popover text-white px-4 py-2.5 rounded-full flex items-center gap-2 text-xs font-semibold whitespace-nowrap"
           >
-            <CheckCircle2 className="w-4 h-4 text-[#2ECC71] shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-[#34D399] shrink-0" />
             <span>{toastMsg}</span>
           </motion.div>
         )}
