@@ -11,12 +11,13 @@ import { AddTradeModal } from './components/trades/AddTradeModal';
 import { TradeDetailModal } from './components/trades/TradeDetailModal';
 import { InstrumentSpecModal } from './components/specs/InstrumentSpecModal';
 import { OfflineBanner } from './components/pwa/OfflineBanner';
+import { TradeLogLogo } from './components/brand/TradeLogLogo';
 import { usePWAInstall } from './hooks/usePWAInstall';
 import { CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const AppContent: React.FC = () => {
-  const { activeTab, accounts } = useTrading();
+  const { activeTab, accounts, isSignedOut, isHydratingSession } = useTrading();
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   usePWAInstall();
 
@@ -43,7 +44,20 @@ const AppContent: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {accounts.length === 0 ? (
+      {isHydratingSession && !isSignedOut && accounts.length === 0 ? (
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 gap-4">
+          <div className="liquid-glass-surface rounded-3xl px-7 py-6 flex flex-col items-center gap-3 text-center max-w-xs w-full">
+            <TradeLogLogo size="md" />
+            <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-white animate-spin mt-1" />
+            <div>
+              <p className="text-sm font-bold text-white">Auto-syncing your journal</p>
+              <p className="text-xs text-neutral-400 mt-1">
+                Loading your accounts and trades...
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : isSignedOut || accounts.length === 0 ? (
         <OnboardingAccountView onAccountCreated={showToast} />
       ) : (
         <>

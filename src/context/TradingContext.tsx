@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import {
   Account,
   Trade,
@@ -12,17 +12,29 @@ import {
 import { STARTER_INSTRUMENT_SPECS } from '../utils/calculations';
 import { db, sanitizeForFirestore } from '../lib/firebase';
 import {
+  generateWorkspaceId,
+  persistSignedOutState,
+  persistWorkspaceSession,
+  readSessionSync,
+  recoverSessionFromIDB
+} from '../utils/sessionStorage';
+import {
   collection,
   doc,
   setDoc,
   deleteDoc,
   getDocs,
+  getDocsFromServer,
   onSnapshot
 } from 'firebase/firestore';
 
 interface TradingContextType {
   workspaceId: string;
   switchWorkspace: (syncKey: string) => Promise<void>;
+  signOut: () => void;
+  isSignedOut: boolean;
+  isHydratingSession: boolean;
+  syncNow: () => Promise<void>;
 
   accounts: Account[];
   selectedAccountId: string;
@@ -113,35 +125,6 @@ interface TradingContextType {
 
 const TradingContext = createContext<TradingContextType | undefined>(undefined);
 
-const WORKSPACE_ID_STORAGE_KEY = 'tradelog_workspace_id_v1';
-
-function generateWorkspaceId(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let suffix = '';
-  for (let i = 0; i < 8; i++) {
-    suffix += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return `TL-${suffix}`;
-}
-
-function getInitialWorkspaceId(): string {
-  try {
-    const existing = localStorage.getItem(WORKSPACE_ID_STORAGE_KEY);
-    if (existing && /^[A-Za-z0-9_-]{4,64}$/.test(existing.trim())) {
-      return existing.trim().toUpperCase();
-    }
-  } catch {
-    // ignore storage errors
-  }
-  const fresh = generateWorkspaceId();
-  try {
-    localStorage.setItem(WORKSPACE_ID_STORAGE_KEY, fresh);
-  } catch {
-    // ignore storage errors
-  }
-  return fresh;
-}
-
 function getWorkspaceStorageKeys(wsId: string) {
   const prefix = `tradelog_ws_${wsId}`;
   return {
@@ -176,42 +159,79 @@ function withTimeout<T>(
 }
 
 export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [workspaceId, setWorkspaceId] = useState<string>(() => getInitialWorkspaceId());
+  const initialSessionRef = useRef<{
+    workspaceId: string;
+    isSignedOut: boolean;
+    hadStoredWorkspace: boolean;
+    cachedAccounts: Account[];
+  } | null>(null);
 
-  const [accounts, setAccounts] = useState<Account[]>(() => {
-    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
-    return readCachedJson<Account[]>(keys.accounts, []);
-  });
+  if (!initialSessionRef.current) {
+    const snap = readSessionSync();
+    const resolvedWs = snap.workspaceId || generateWorkspaceId();
+    const cachedAccs = snap.isSignedOut
+      ? []
+      : readCachedJson<Account[]>(getWorkspaceStorageKeys(resolvedWs).accounts, []);
+    if (!snap.isSignedOut && snap.workspaceId) {
+      persistWorkspaceSession(snap.workspaceId, cachedAccs.length > 0);
+    }
+    initialSessionRef.current = {
+      workspaceId: resolvedWs,
+      isSignedOut: snap.isSignedOut,
+      hadStoredWorkspace: Boolean(snap.workspaceId),
+      cachedAccounts: cachedAccs
+    };
+  }
+
+  const initialSession = initialSessionRef.current;
+
+  const [workspaceId, setWorkspaceId] = useState<string>(initialSession.workspaceId);
+  const [isSignedOut, setIsSignedOut] = useState<boolean>(initialSession.isSignedOut);
+  const [isHydratingSession, setIsHydratingSession] = useState<boolean>(
+    !initialSession.isSignedOut && initialSession.cachedAccounts.length === 0
+  );
+
+  const [accounts, setAccounts] = useState<Account[]>(initialSession.cachedAccounts);
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>(() => {
-    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
-    return localStorage.getItem(keys.selectedAccount) || '';
+    if (initialSession.isSignedOut) return '';
+    const keys = getWorkspaceStorageKeys(initialSession.workspaceId);
+    try {
+      return localStorage.getItem(keys.selectedAccount) || '';
+    } catch {
+      return '';
+    }
   });
 
   const [trades, setTrades] = useState<Trade[]>(() => {
-    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
+    if (initialSession.isSignedOut) return [];
+    const keys = getWorkspaceStorageKeys(initialSession.workspaceId);
     return readCachedJson<Trade[]>(keys.trades, []);
   });
 
   const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
 
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
-    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
+    if (initialSession.isSignedOut) return [];
+    const keys = getWorkspaceStorageKeys(initialSession.workspaceId);
     return readCachedJson<JournalEntry[]>(keys.journal, []);
   });
 
   const [rules, setRules] = useState<TradingRule[]>(() => {
-    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
+    if (initialSession.isSignedOut) return [];
+    const keys = getWorkspaceStorageKeys(initialSession.workspaceId);
     return readCachedJson<TradingRule[]>(keys.rules, []);
   });
 
   const [instrumentSpecs, setInstrumentSpecs] = useState<Record<string, InstrumentSpec>>(() => {
-    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
+    if (initialSession.isSignedOut) return STARTER_INSTRUMENT_SPECS;
+    const keys = getWorkspaceStorageKeys(initialSession.workspaceId);
     return readCachedJson<Record<string, InstrumentSpec>>(keys.specs, STARTER_INSTRUMENT_SPECS);
   });
 
   const [exchangeRates, setExchangeRates] = useState<ExchangeRateMap>(() => {
-    const keys = getWorkspaceStorageKeys(getInitialWorkspaceId());
+    if (initialSession.isSignedOut) return {};
+    const keys = getWorkspaceStorageKeys(initialSession.workspaceId);
     return readCachedJson<ExchangeRateMap>(keys.rates, {});
   });
 
@@ -227,41 +247,121 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [journalViewMode, setJournalViewMode] = useState<'weekly' | 'calendar'>('weekly');
   const [firestoreStatus, setFirestoreStatus] = useState<'connected' | 'syncing' | 'offline'>('syncing');
 
-  // LocalStorage Persistence scoped per workspaceId
+  // Recover durable IndexedDB session if localStorage & cookies were purged (e.g. after hours away)
   useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const recovered = await recoverSessionFromIDB();
+      if (cancelled) return;
+
+      if (recovered.isSignedOut) {
+        setIsSignedOut(true);
+        setIsHydratingSession(false);
+        return;
+      }
+
+      if (recovered.workspaceId && recovered.workspaceId !== workspaceId) {
+        const keys = getWorkspaceStorageKeys(recovered.workspaceId);
+        const cached = readCachedJson<Account[]>(keys.accounts, []);
+        setWorkspaceId(recovered.workspaceId);
+        setIsSignedOut(false);
+        if (cached.length > 0) {
+          setAccounts(cached);
+          setTrades(readCachedJson<Trade[]>(keys.trades, []));
+          setJournalEntries(readCachedJson<JournalEntry[]>(keys.journal, []));
+          setRules(readCachedJson<TradingRule[]>(keys.rules, []));
+          setInstrumentSpecs(
+            readCachedJson<Record<string, InstrumentSpec>>(keys.specs, STARTER_INSTRUMENT_SPECS)
+          );
+          setExchangeRates(readCachedJson<ExchangeRateMap>(keys.rates, {}));
+          setIsHydratingSession(false);
+        }
+        return;
+      }
+
+      if (!recovered.workspaceId && !initialSession.hadStoredWorkspace) {
+        setIsHydratingSession(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // LocalStorage Persistence scoped per workspaceId (skip while signed out)
+  useEffect(() => {
+    if (isSignedOut) return;
     const keys = getWorkspaceStorageKeys(workspaceId);
-    localStorage.setItem(keys.accounts, JSON.stringify(accounts));
-  }, [workspaceId, accounts]);
+    try {
+      localStorage.setItem(keys.accounts, JSON.stringify(accounts));
+      if (accounts.length > 0) {
+        persistWorkspaceSession(workspaceId, true);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [workspaceId, accounts, isSignedOut]);
 
   useEffect(() => {
+    if (isSignedOut) return;
     const keys = getWorkspaceStorageKeys(workspaceId);
-    localStorage.setItem(keys.selectedAccount, selectedAccountId);
-  }, [workspaceId, selectedAccountId]);
+    try {
+      localStorage.setItem(keys.selectedAccount, selectedAccountId);
+    } catch {
+      // ignore
+    }
+  }, [workspaceId, selectedAccountId, isSignedOut]);
 
   useEffect(() => {
+    if (isSignedOut) return;
     const keys = getWorkspaceStorageKeys(workspaceId);
-    localStorage.setItem(keys.trades, JSON.stringify(trades));
-  }, [workspaceId, trades]);
+    try {
+      localStorage.setItem(keys.trades, JSON.stringify(trades));
+    } catch {
+      // ignore
+    }
+  }, [workspaceId, trades, isSignedOut]);
 
   useEffect(() => {
+    if (isSignedOut) return;
     const keys = getWorkspaceStorageKeys(workspaceId);
-    localStorage.setItem(keys.journal, JSON.stringify(journalEntries));
-  }, [workspaceId, journalEntries]);
+    try {
+      localStorage.setItem(keys.journal, JSON.stringify(journalEntries));
+    } catch {
+      // ignore
+    }
+  }, [workspaceId, journalEntries, isSignedOut]);
 
   useEffect(() => {
+    if (isSignedOut) return;
     const keys = getWorkspaceStorageKeys(workspaceId);
-    localStorage.setItem(keys.rules, JSON.stringify(rules));
-  }, [workspaceId, rules]);
+    try {
+      localStorage.setItem(keys.rules, JSON.stringify(rules));
+    } catch {
+      // ignore
+    }
+  }, [workspaceId, rules, isSignedOut]);
 
   useEffect(() => {
+    if (isSignedOut) return;
     const keys = getWorkspaceStorageKeys(workspaceId);
-    localStorage.setItem(keys.specs, JSON.stringify(instrumentSpecs));
-  }, [workspaceId, instrumentSpecs]);
+    try {
+      localStorage.setItem(keys.specs, JSON.stringify(instrumentSpecs));
+    } catch {
+      // ignore
+    }
+  }, [workspaceId, instrumentSpecs, isSignedOut]);
 
   useEffect(() => {
+    if (isSignedOut) return;
     const keys = getWorkspaceStorageKeys(workspaceId);
-    localStorage.setItem(keys.rates, JSON.stringify(exchangeRates));
-  }, [workspaceId, exchangeRates]);
+    try {
+      localStorage.setItem(keys.rates, JSON.stringify(exchangeRates));
+    } catch {
+      // ignore
+    }
+  }, [workspaceId, exchangeRates, isSignedOut]);
 
   // Ensure selectedAccountId always points to an existing account
   useEffect(() => {
@@ -279,10 +379,82 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [accounts, selectedAccountId]);
 
+  const syncNow = useCallback(async () => {
+    if (isSignedOut || !workspaceId) return;
+    setFirestoreStatus('syncing');
+    try {
+      const fetchCol = async (name: string) => {
+        const ref = collection(db, 'workspaces', workspaceId, name);
+        try {
+          return await withTimeout(getDocsFromServer(ref), 10000);
+        } catch {
+          return await withTimeout(getDocs(ref), 10000);
+        }
+      };
+
+      const [accountsSnap, tradesSnap, rulesSnap, journalSnap] = await Promise.all([
+        fetchCol('accounts'),
+        fetchCol('trades'),
+        fetchCol('rules'),
+        fetchCol('journal')
+      ]);
+
+      const loadedAccounts: Account[] = [];
+      accountsSnap.forEach((docSnap) => {
+        loadedAccounts.push({ id: docSnap.id, ...docSnap.data() } as Account);
+      });
+      loadedAccounts.sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
+
+      const loadedTrades: Trade[] = [];
+      tradesSnap.forEach((docSnap) => {
+        loadedTrades.push({ id: docSnap.id, ...docSnap.data() } as Trade);
+      });
+      loadedTrades.sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+
+      const loadedRules: TradingRule[] = [];
+      rulesSnap.forEach((docSnap) => {
+        loadedRules.push({ id: docSnap.id, ...docSnap.data() } as TradingRule);
+      });
+
+      const loadedJournal: JournalEntry[] = [];
+      journalSnap.forEach((docSnap) => {
+        loadedJournal.push({ id: docSnap.id, ...docSnap.data() } as JournalEntry);
+      });
+      loadedJournal.sort((a, b) => b.date.localeCompare(a.date));
+
+      setAccounts(loadedAccounts);
+      setTrades(loadedTrades);
+      setRules(loadedRules);
+      setJournalEntries(loadedJournal);
+      setFirestoreStatus('connected');
+      if (loadedAccounts.length > 0) {
+        persistWorkspaceSession(workspaceId, true);
+      }
+    } catch (err) {
+      console.warn('Background workspace sync notice:', err);
+      setFirestoreStatus('offline');
+    } finally {
+      setIsHydratingSession(false);
+    }
+  }, [workspaceId, isSignedOut]);
+
   // Real-time Firestore sync isolated to workspaces/{workspaceId}/...
   useEffect(() => {
+    if (isSignedOut) {
+      setIsHydratingSession(false);
+      return;
+    }
+
     const unsubs: (() => void)[] = [];
     setFirestoreStatus('syncing');
+
+    // Hydrate from server once on mount/workspace change if session has no cached accounts yet
+    let hydrationTimer: ReturnType<typeof setTimeout> | null = null;
+    if (isHydratingSession) {
+      hydrationTimer = setTimeout(() => {
+        setIsHydratingSession(false);
+      }, 6500);
+    }
 
     try {
       // 1. Trades
@@ -316,11 +488,21 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
               list.push({ id: docSnap.id, ...docSnap.data() } as Account);
             });
             list.sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
-            setAccounts(list);
+
+            // Avoid wiping out an active user's accounts if offline cache returned empty while waiting on server
+            if (list.length > 0 || !snapshot.metadata.fromCache) {
+              setAccounts(list);
+              setIsHydratingSession(false);
+              if (hydrationTimer) {
+                clearTimeout(hydrationTimer);
+                hydrationTimer = null;
+              }
+            }
           },
           (err) => {
             console.warn('Firestore accounts listener notice:', err.message);
             setFirestoreStatus('offline');
+            setIsHydratingSession(false);
           }
         )
       );
@@ -405,20 +587,50 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } catch (e) {
       console.warn('Firestore setup warning:', e);
       setFirestoreStatus('offline');
+      setIsHydratingSession(false);
     }
 
     return () => {
+      if (hydrationTimer) clearTimeout(hydrationTimer);
       unsubs.forEach((u) => u());
     };
-  }, [workspaceId]);
+  }, [workspaceId, isSignedOut]);
+
+  // Auto-sync immediately when returning to the app after hours away (resume / focus / online)
+  const lastAutoSyncRef = useRef<number>(0);
+  useEffect(() => {
+    if (isSignedOut) return;
+
+    const triggerAutoSync = () => {
+      const now = Date.now();
+      if (now - lastAutoSyncRef.current < 5000) return;
+      lastAutoSyncRef.current = now;
+      void syncNow();
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        triggerAutoSync();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', triggerAutoSync);
+    window.addEventListener('pageshow', triggerAutoSync);
+    window.addEventListener('online', triggerAutoSync);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', triggerAutoSync);
+      window.removeEventListener('pageshow', triggerAutoSync);
+      window.removeEventListener('online', triggerAutoSync);
+    };
+  }, [isSignedOut, syncNow]);
 
   const switchWorkspace = async (syncKeyInput: string): Promise<void> => {
     const cleanId = syncKeyInput.trim().toUpperCase();
     if (!/^[A-Z0-9_-]{4,64}$/.test(cleanId)) {
       throw new Error('Please enter a valid Sync Key (4–64 letters, numbers, hyphens, or underscores).');
-    }
-    if (cleanId === workspaceId) {
-      return;
     }
 
     const accountsSnap = await withTimeout(
@@ -433,7 +645,9 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
     loadedAccounts.sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
 
-    localStorage.setItem(WORKSPACE_ID_STORAGE_KEY, cleanId);
+    persistWorkspaceSession(cleanId, true);
+    setIsSignedOut(false);
+    setIsHydratingSession(false);
     setSelectedTradeId(null);
     setTrades([]);
     setJournalEntries([]);
@@ -443,6 +657,22 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setAccounts(loadedAccounts);
     setSelectedAccountId(loadedAccounts[0]?.id || '');
     setWorkspaceId(cleanId);
+  };
+
+  const signOut = () => {
+    persistSignedOutState(workspaceId);
+    setIsAccountModalOpen(false);
+    setSelectedTradeId(null);
+    setAccounts([]);
+    setSelectedAccountId('');
+    setTrades([]);
+    setJournalEntries([]);
+    setRules([]);
+    setExchangeRates({});
+    setInstrumentSpecs(STARTER_INSTRUMENT_SPECS);
+    setIsHydratingSession(false);
+    setIsSignedOut(true);
+    setWorkspaceId(generateWorkspaceId());
   };
 
   // Filtered trades by account
@@ -487,6 +717,10 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     } catch (err: any) {
       throw new Error(err?.message || 'Failed to save account to Firestore.');
     }
+
+    persistWorkspaceSession(workspaceId, true);
+    setIsSignedOut(false);
+    setIsHydratingSession(false);
 
     setAccounts((prev) => {
       if (prev.some((a) => a.id === newAcc.id)) return prev;
@@ -855,6 +1089,10 @@ export const TradingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       value={{
         workspaceId,
         switchWorkspace,
+        signOut,
+        isSignedOut,
+        isHydratingSession,
+        syncNow,
 
         accounts,
         selectedAccountId,

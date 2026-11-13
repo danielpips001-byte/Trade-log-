@@ -16,7 +16,8 @@ import {
   AlertCircle,
   Layers,
   KeyRound,
-  Copy
+  Copy,
+  LogOut
 } from 'lucide-react';
 import { TradeLogLogo } from '../brand/TradeLogLogo';
 import { PWAInstallControl } from '../pwa/PWAInstallControl';
@@ -28,6 +29,7 @@ export const AccountsModal: React.FC = () => {
   const {
     workspaceId,
     switchWorkspace,
+    signOut,
     accounts,
     selectedAccountId,
     setSelectedAccountId,
@@ -58,11 +60,12 @@ export const AccountsModal: React.FC = () => {
   const [quickRateInput, setQuickRateInput] = useState('');
   const [savingRate, setSavingRate] = useState(false);
 
-  // Workspace Sync Key state
+  // Workspace Sync Key & Sign Out state
   const [copiedKey, setCopiedKey] = useState(false);
   const [showSwitchKey, setShowSwitchKey] = useState(false);
   const [switchKeyInput, setSwitchKeyInput] = useState('');
   const [isSwitchingKey, setIsSwitchingKey] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -75,6 +78,7 @@ export const AccountsModal: React.FC = () => {
   const handleClose = () => {
     setErrorMsg(null);
     setEditingId(null);
+    setShowSignOutConfirm(false);
     setMode('list');
     setIsAccountModalOpen(false);
   };
@@ -783,6 +787,76 @@ export const AccountsModal: React.FC = () => {
 
                   {/* Discreet App Install Option (hidden automatically when already installed) */}
                   <PWAInstallControl variant="settings" />
+
+                  {/* Profile Sign Out */}
+                  <div className="rounded-2xl p-3.5 liquid-glass-subcard space-y-2.5">
+                    {!showSignOutConfirm ? (
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <span className="text-xs font-semibold text-white block">
+                            Session &amp; Auto-Sync
+                          </span>
+                          <span className="text-[11px] text-neutral-400 block">
+                            Journal stays auto-synced until you sign out.
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setErrorMsg(null);
+                            setShowSignOutConfirm(true);
+                          }}
+                          className="px-3.5 py-2 rounded-full bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 min-h-[38px]"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        <p className="text-xs text-neutral-200 leading-relaxed">
+                          Save your Sync Key <span className="font-mono font-bold text-white">{workspaceId}</span> before signing out so you can restore your journal later or on a new phone.
+                        </p>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={handleCopySyncKey}
+                            className="px-3 py-1.5 rounded-full liquid-glass-pill text-xs font-semibold text-neutral-200 flex items-center gap-1 cursor-pointer"
+                          >
+                            {copiedKey ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-[#34D399]" />
+                                <span className="text-[#34D399]">Copied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" />
+                                <span>Copy Key</span>
+                              </>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowSignOutConfirm(false)}
+                            className="px-3.5 py-1.5 rounded-full liquid-glass-pill text-neutral-300 text-xs font-semibold cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowSignOutConfirm(false);
+                              signOut();
+                            }}
+                            className="px-3.5 py-1.5 rounded-full bg-red-500/25 hover:bg-red-500/35 border border-red-400/40 text-red-100 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <LogOut className="w-3.5 h-3.5" />
+                            <span>Confirm Sign Out</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

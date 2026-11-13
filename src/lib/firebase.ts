@@ -47,3 +47,7 @@ export async function testConnection(): Promise<boolean> {
     return true;
   }
 }
+
+if (typeof window !== 'undefined') {
+  void testConnection();
+}
